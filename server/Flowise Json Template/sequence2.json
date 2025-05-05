@@ -1,0 +1,64 @@
+  {
+    "project_name": "Employee Management System",
+    "project_description": "A web-based application to manage employee records, including personal details, job roles, attendance, salary, and performance reviews.",
+    "accepted_entities": [
+      {
+        "Entity_Name": "Employee",
+        "Entity_Description": "Represents an employee, including personal and job-related details.",
+        "Fields": ["id", "name", "email", "job_title"]
+      },
+      {
+        "Entity_Name": "Attendance",
+        "Entity_Description": "Tracks employee attendance.",
+        "Fields": ["id", "employee_id", "date", "status"]
+      },
+      {
+        "Entity_Name": "Leave",
+        "Entity_Description": "Manages employee leaves.",
+        "Fields": ["id", "employee_id", "leave_type", "start_date", "end_date"]
+      },
+      {
+        "Entity_Name": "Salary",
+        "Entity_Description": "Stores employee salary information.",
+        "Fields": ["id", "employee_id", "salary", "bonus"]
+      },
+      {
+        "Entity_Name": "Performance_Review",
+        "Entity_Description": "Records employee performance reviews.",
+        "Fields": ["id", "employee_id", "review_date", "rating"]
+      },
+      {
+        "Entity_Name": "User",
+        "Entity_Description": "Represents a user of the system, including administrators, HR personnel, and employees.",
+        "Fields": ["id", "username", "password", "role"]
+      }
+    ],
+    "rejected_entities": [
+        {
+            "Entity_Name": "Department",
+            "Entity_Description": "Represents a department in the organization.",
+            "Fields": ["id", "department_name", "department_head"]
+          },
+          {
+            "Entity_Name": "Job_History",
+            "Entity_Description": "Tracks an employee's job history.",
+            "Fields": ["id", "employee_id", "job_title", "start_date", "end_date"]
+          },
+          {
+            "Entity_Name": "Training",
+            "Entity_Description": "Manages employee training and development.",
+            "Fields": ["id", "employee_id", "training_name", "start_date", "end_date"]
+          },
+          {
+            "Entity_Name": "Benefit",
+            "Entity_Description": "Stores employee benefit information.",
+            "Fields": ["id", "employee_id", "benefit_type", "benefit_amount"]
+          },
+          {
+            "Entity_Name": "Complaint",
+            "Entity_Description": "Manages employee complaints and grievances.",
+            "Fields": ["id", "employee_id", "complaint_description", "resolution"]
+          }
+    ]
+    
+  }
