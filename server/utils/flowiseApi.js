@@ -1,36 +1,27 @@
-import fetch from 'node-fetch';
-import dotenv from 'dotenv';
+const fs = require('fs');
+const axios = require('axios');
 
-dotenv.config();
-
-const FLOWISE_API_URL = process.env.FLOWISE_API_URL;
-const FLOWISE_API_ENDPOINT = process.env.FLOWISE_API_ENDPOINT;
-
-export const queryFlowiseApi = async (jsonData) => {
+exports.callFlowiseAPI = async (endpointId, data) => {
   try {
-    const apiUrl = `${FLOWISE_API_URL}/${FLOWISE_API_ENDPOINT}`;
+    const url = `http://localhost:3000/api/v1/prediction/${endpointId}`;
     
-    const requestData = {
-      question: JSON.stringify(jsonData)
-    };
+    let requestBody = {};
     
-    const response = await fetch(apiUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(requestData),
-    });
-    
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`API request failed with status ${response.status}: ${errorText}`);
+    // If there's a file path, read the file and add its content to the request
+    if (data.file && fs.existsSync(data.file)) {
+      const fileContent = fs.readFileSync(data.file, 'utf8');
+      requestBody = { question: fileContent };
+    } else {
+      requestBody = { question: JSON.stringify(data) };
     }
     
-    const result = await response.json();
-    return result;
+    const response = await axios.post(url, requestBody, {
+      headers: { 'Content-Type': 'application/json' }
+    });
+    
+    return response.data;
   } catch (error) {
     console.error('Error calling Flowise API:', error);
-    throw new Error(`Flowise API call failed: ${error.message}`);
+    throw new Error(`API call failed: ${error.message}`);
   }
 };
