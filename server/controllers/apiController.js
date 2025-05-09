@@ -18,7 +18,7 @@ exports.processDescription = async (req, res) => {
     
     // Call the Flowise API
     const result = await callFlowiseAPI(
-      'a38d57f4-ea59-4c29-8760-1b2ebf8996b3',
+      'c78f0c45-93b0-4457-b173-aaec02ad84e8', //Description Generation Refinement
       { file: filePath }
     );
     
@@ -42,7 +42,7 @@ exports.generateEntities = async (req, res) => {
     
     // Call the Flowise API
     const result = await callFlowiseAPI(
-      'bb6caff7-e079-43f7-99f7-02e7487e1ba3',
+      'd93a1ded-dc5d-416f-91d5-f8a16540e95b',
       { file: filePath }
     );
     
@@ -66,7 +66,7 @@ exports.refineEntities = async (req, res) => {
     
     // Call the Flowise API for refinement (assuming you have this endpoint)
     const result = await callFlowiseAPI(
-      'bb6caff7-e079-43f7-99f7-02e7487e1ba3', // Replace with your actual refinement endpoint ID
+      'baf34a50-f8e6-474a-9664-9c57523766c7', // Replace with your actual refinement endpoint ID
       { file: filePath }
     );
     
