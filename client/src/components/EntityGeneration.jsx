@@ -10,96 +10,131 @@ function EntityGenerationPage() {
   const [error, setError] = useState('');
 
   useEffect(() => {
-    // Try to fetch existing entity data
-    axios.get('http://localhost:5000/api/entity-data')
-      .then(response => {
-        console.log('Fetched entity data:', response.data); 
-        setEntityData(response.data);
-        setLoading(false);
-      })
-      .catch(error => {
-        if (error.response && error.response.status === 404) {
-          // No entity data exists yet, set loading to false
-          setLoading(false);
+    const fetchEntityData = async () => {
+      try {
+        const response = await axios.get('http://localhost:5000/api/entity-data');
+        console.log('API Response:', response.data);
+        
+        // Validate response structure
+        if (response.data && Array.isArray(response.data.entities)) {
+          setEntityData(response.data);
         } else {
-          console.error('Error fetching entity data:', error);
-          setError('Failed to fetch entity data');
-          setLoading(false);
+          throw new Error('Invalid data structure from API');
         }
-      });
+      } catch (error) {
+        console.error('Fetch Error:', error);
+        if (error.response?.status === 404) {
+          setError('No existing entities found');
+        } else {
+          setError(error.message || 'Failed to fetch entities');
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchEntityData();
   }, []);
 
-  const handleGenerateEntities = async () => {
-    setGenerating(true);
-    setError('');
+  // In your EntityGenerationPage.js
+const handleGenerateEntities = async () => {
+  setGenerating(true);
+  setError('');
+  
+  try {
+    const response = await axios.post('http://localhost:5000/api/generate-entities');
+    console.log('Generation Response:', response.data);
     
-    try {
-      const response = await axios.post('http://localhost:5000/api/generate-entities');
-      setEntityData(response.data.data);
-    } catch (error) {
-      console.error('Error generating entities:', error);
-      setError('Failed to generate entities. Please try again.');
-    } finally {
-      setGenerating(false);
-    }
-  };
+    // Transform the data in the frontend
+    const transformedData = response.data.data ? {
+      ...response.data.data,
+      entities: response.data.data.entities.map(entity => ({
+        name: entity.Entity_Name,
+        description: entity.Entity_Description,
+        fields: entity.Fields.map(fieldName => ({
+          name: fieldName,
+          type: 'string',
+          description: ''
+        }))
+      }))
+    } : null;
+    
+    setEntityData(transformedData);
+  } catch (error) {
+    console.error('Generation Error:', error);
+    setError(error.message || 'Failed to generate entities');
+  } finally {
+    setGenerating(false);
+  }
+};
 
   if (loading) {
-    return (
-      <div className="container mt-5">
-        <Loader text="Loading entity data..." />
-      </div>
-    );
+    return <Loader text="Loading entity data..." />;
   }
 
   return (
     <div className="container mt-5">
       <h1 className="mb-3">Entity Generation</h1>
       
-      {error && <div className="error-message">{error}</div>}
-      
-      {!entityData && !generating ? (
-        <div className="entity-generation-prompt">
-          <p>No entities have been generated yet. Would you like to generate entities based on your project description?</p>
-          <button 
-            className="btn btn-primary"
-            onClick={handleGenerateEntities}
-          >
-            Generate Entities
+      {error && (
+        <div className="alert alert-danger">
+          {error}
+          <button className="btn btn-sm btn-link" onClick={() => setError('')}>
+            Dismiss
           </button>
         </div>
-      ) : generating ? (
-        <Loader text="Generating entities based on your project description..." />
-      ) : (
-        <div className="entity-results">
-          <div className="project-info">
-            <h2>{entityData.project_name}</h2>
-            <p>{entityData.project_description}</p>
-          </div>
-          
-          <h3 className="entities-heading">Generated Entities</h3>
-          
-          {entityData.entities.length > 0 ? (
-            <div className="entities-container">
-              {entityData.entities.map((entity, index) => (
-                <EntityCard key={index} entity={entity} />
-              ))}
+      )}
+      
+      <div className="card">
+        <div className="card-body">
+          {!entityData ? (
+            <div className="text-center py-4">
+              <p>No entities available. Generate your first set of entities.</p>
+              <button 
+                className="btn btn-primary"
+                onClick={handleGenerateEntities}
+                disabled={generating}
+              >
+                {generating ? 'Generating...' : 'Generate Entities'}
+              </button>
             </div>
           ) : (
-            <p>No entities were generated. Try updating your project description for better results.</p>
+            <>
+              <div className="mb-4">
+                <h2>{entityData.project_name || 'Untitled Project'}</h2>
+                <p className="text-muted">
+                  {entityData.project_description || 'No description available'}
+                </p>
+              </div>
+              
+              <div className="d-flex justify-content-between align-items-center mb-3">
+                <h3>Entities</h3>
+                <button
+                  className="btn btn-outline-secondary"
+                  onClick={handleGenerateEntities}
+                  disabled={generating}
+                >
+                  {generating ? 'Regenerating...' : 'Regenerate'}
+                </button>
+              </div>
+              
+              {entityData.entities?.length > 0 ? (
+                <div className="row">
+                  {entityData.entities.map((entity, index) => (
+                    <div key={index} className="col-md-6 col-lg-4 mb-4">
+                      <EntityCard entity={entity} />
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="alert alert-info">
+                  No entities generated. Try regenerating with more detailed project information.
+                </div>
+              )}
+            </>
           )}
-          
-          <div className="actions-container">
-            <button 
-              className="btn btn-secondary"
-              onClick={handleGenerateEntities}
-              disabled={generating}
-            >
-              Regenerate Entities
-            </button>
-          </div>
         </div>
-      )}
+      </div>
     </div>
   );
 }

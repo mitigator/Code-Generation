@@ -3,29 +3,40 @@ import React, { useState } from 'react';
 function EntityCard({ entity }) {
   const [expanded, setExpanded] = useState(false);
 
+  if (!entity) return null;
+
   return (
-    <div className="entity-card">
+    <div className="card h-100">
       <div 
-        className="entity-header"
+        className="card-header d-flex justify-content-between align-items-center cursor-pointer"
         onClick={() => setExpanded(!expanded)}
+        style={{ cursor: 'pointer' }}
       >
-        <h3>{entity.name}</h3>
-        <button className="btn-toggle">
-          {expanded ? '▼' : '►'}
-        </button>
+        <h5 className="mb-0">{entity.name || entity.Entity_Name || 'Unnamed Entity'}</h5>
+        <span className="badge bg-primary">
+          {expanded ? 'Hide' : 'Show'}
+        </span>
       </div>
       
       {expanded && (
-        <div className="entity-content">
-          <p><strong>Description:</strong> {entity.description}</p>
+        <div className="card-body">
+          <p className="card-text">
+            <strong>Description:</strong> {entity.description || entity.Entity_Description || 'No description available'}
+          </p>
           
-          <h4>Fields:</h4>
-          <ul className="fields-list">
-            {entity.fields.map((field, index) => (
-              <li key={index} className="field-item">
-                <span className="field-name">{field.name}</span>
-                <span className="field-type">{field.type}</span>
-                {field.description && <p className="field-desc">{field.description}</p>}
+          <h6>Fields:</h6>
+          <ul className="list-group list-group-flush">
+            {(entity.fields || entity.Fields || []).map((field, index) => (
+              <li key={index} className="list-group-item">
+                <div className="d-flex justify-content-between">
+                  <strong>{field.name || field || 'unnamed_field'}</strong>
+                  <span className="text-muted">{field.type || 'string'}</span>
+                </div>
+                {field.description && (
+                  <small className="text-muted d-block mt-1">
+                    {field.description}
+                  </small>
+                )}
               </li>
             ))}
           </ul>

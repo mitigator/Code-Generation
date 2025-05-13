@@ -8,6 +8,24 @@
   transition: all 0.2s ease;
 }
 
+.cursor-pointer {
+  cursor: pointer;
+}
+
+.entity-card {
+  transition: all 0.3s ease;
+  margin-bottom: 1rem;
+}
+
+.entity-card:hover {
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+}
+
+.field-item {
+  padding: 0.5rem;
+  border-bottom: 1px solid #eee;
+}
+
 .entity-card.expanded {
   box-shadow: 0 4px 8px rgba(0,0,0,0.1);
 }
