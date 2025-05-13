@@ -29,12 +29,14 @@ export async function generateEntities(req, res) {
     
     // Parse the result.text as JSON (it's a string containing JSON)
     let entityData;
-    try {
-      entityData = JSON.parse(result.text);
-    } catch (parseError) {
-      console.error('Error parsing entity generation result:', parseError);
-      return res.status(500).json({ error: 'Failed to parse entity generation result' });
-    }
+try {
+  const cleanText = result.text.replace(/```json|```/g, '').trim(); // remove code block markers
+  entityData = JSON.parse(cleanText);
+} catch (parseError) {
+  console.error('Error parsing entity generation result:', parseError);
+  return res.status(500).json({ error: 'Failed to parse entity generation result' });
+}
+
     
     // Save the parsed entity data to entity_generation.json
     await saveFile('entity_generation.json', entityData);
