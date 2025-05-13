@@ -1,0 +1,99 @@
+
+.entity-card {
+  border: 1px solid #e1e4e8;
+  border-radius: 6px;
+  margin-bottom: 16px;
+  background-color: #fff;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  transition: all 0.2s ease;
+}
+
+.entity-card.expanded {
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.entity-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px;
+  cursor: pointer;
+  background-color: #f6f8fa;
+  border-bottom: 1px solid #e1e4e8;
+}
+
+.entity-header:hover {
+  background-color: #f0f3f6;
+}
+
+.entity-name {
+  margin: 0;
+  font-size: 18px;
+  color: #24292e;
+}
+
+.toggle-icon {
+  font-size: 14px;
+  color: #586069;
+}
+
+.entity-content {
+  padding: 16px;
+}
+
+.entity-description {
+  margin: 0 0 16px 0;
+  color: #444d56;
+  line-height: 1.5;
+}
+
+.fields-section {
+  margin-top: 12px;
+}
+
+.fields-heading {
+  margin: 0 0 8px 0;
+  font-size: 16px;
+  color: #24292e;
+}
+
+.fields-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.field-item {
+  padding: 8px 0;
+  border-bottom: 1px solid #eaecef;
+}
+
+.field-item:last-child {
+  border-bottom: none;
+}
+
+.field-info {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+
+.field-name {
+  font-weight: 600;
+  color: #24292e;
+}
+
+.field-type {
+  font-size: 12px;
+  color: #586069;
+  background-color: #f6f8fa;
+  padding: 2px 6px;
+  border-radius: 3px;
+}
+
+.field-description {
+  margin: 0;
+  font-size: 14px;
+  color: #586069;
+  line-height: 1.4;
+}

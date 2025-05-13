@@ -1,24 +1,25 @@
-import React from 'react';
+import { useState } from 'react'
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import HomePage from './pages/HomePage';
-import DescriptionPage from './pages/DescriptionPage';
-import EntityGenerationPage from './pages/EntityGenerationPage';
-import EntityRefinementPage from './pages/EntityRefinementPage';
-
-
+import './App.css'
+import Home from './pages/Home';
+import ProjectStartupPage from './components/ProjectStartup';
+import EntityGenerationPage from './components/EntityGeneration';
 function App() {
+  const [count, setCount] = useState(0)
+
   return (
-    <Router>
-      <div className="container">
+    <>
+      <Router>
+      <div className="App">
         <Routes>
-          <Route path="/" element={<HomePage />} />
-          <Route path="/description" element={<DescriptionPage />} />
+          <Route path="/" element={<Home />} />
+          <Route path="/project-startup" element={<ProjectStartupPage />} />
           <Route path="/entity-generation" element={<EntityGenerationPage />} />
-          <Route path="/entity-refinement" element={<EntityRefinementPage />} />
         </Routes>
       </div>
     </Router>
-  );
+    </>
+  )
 }
 
-export default App;
+export default App

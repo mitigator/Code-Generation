@@ -1,11 +1,12 @@
 import React from 'react';
 
-function LoadingSpinner() {
+function Loader({ text = 'Loading...' }) {
   return (
-    <div className="loading">
-      <p>Processing... Please wait</p>
+    <div className="loader-container">
+      <div className="loader"></div>
+      <p>{text}</p>
     </div>
   );
 }
 
-export default LoadingSpinner;
+export default Loader;
