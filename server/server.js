@@ -4,6 +4,8 @@ import cors from 'cors';
 import { ensureDataDirExists } from './utils/fileUtils.js';
 import descriptionRoutes from './routes/descriptionRoutes.js';
 import entityRoutes from './routes/entityRoutes.js';
+import projectRoutes from './routes/projectRoutes.js';
+
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -18,6 +20,9 @@ ensureDataDirExists();
 // Routes
 app.use('/api', descriptionRoutes);
 app.use('/api', entityRoutes);
+app.use('/api', projectRoutes);
+
+
 
 // Add a simple route to check if server is running
 app.get('/', (req, res) => {
