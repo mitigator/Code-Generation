@@ -2,12 +2,15 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import EntityCard from '../components/EntityCard';
 import Loader from './LoadingSpinner';
+import TechStackSelection from '../components/TechStackSelection';
 
 function EntityGenerationPage() {
   const [entityData, setEntityData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState('');
+  const [selectedEntities, setSelectedEntities] = useState([]);
+  const [showTechStack, setShowTechStack] = useState(false);
 
   useEffect(() => {
     const fetchEntityData = async () => {
@@ -16,6 +19,8 @@ function EntityGenerationPage() {
         
         if (response.data && Array.isArray(response.data.entities)) {
           setEntityData(response.data);
+          // Initialize all entities as selected by default
+          setSelectedEntities(response.data.entities.map((_, index) => index));
         } else {
           throw new Error('Invalid data structure from API');
         }
@@ -52,6 +57,10 @@ function EntityGenerationPage() {
       } : null;
       
       setEntityData(transformedData);
+      // Initialize all new entities as selected by default
+      if (transformedData?.entities) {
+        setSelectedEntities(transformedData.entities.map((_, index) => index));
+      }
     } catch (error) {
       console.error('Generation Error:', error);
       setError(error.message || 'Failed to generate entities');
@@ -60,11 +69,73 @@ function EntityGenerationPage() {
     }
   };
 
+  const toggleEntitySelection = (index) => {
+    setSelectedEntities(prev => 
+      prev.includes(index) 
+        ? prev.filter(i => i !== index) 
+        : [...prev, index]
+    );
+  };
+
+  const handleTechStackSubmit = async (techStack) => {
+    try {
+      // Prepare the final project data
+      const projectData = {
+        project_name: entityData.project_name,
+        project_description: entityData.project_description,
+        entities: selectedEntities.map(index => {
+          const entity = entityData.entities[index];
+          return {
+            entity_name: entity.name || entity.Entity_Name,
+            entity_description: entity.description || entity.Entity_Description,
+            fields: entity.fields ? entity.fields.map(f => f.name) : entity.Fields
+          };
+        }),
+        stack: techStack
+      };
+
+      // Save the project data
+      const response = await axios.post('http://localhost:5000/api/save-project', {
+        projectData
+      });
+
+      // Send to Flowise API
+      const formData = new FormData();
+      formData.append('files', new Blob([JSON.stringify(projectData)], { type: 'application/json' }), 'tech_stack.json');
+
+      const flowiseResponse = await fetch(
+        "http://localhost:3000/api/v1/prediction/342522aa-c0e8-48d3-9f56-ac90a04376ea",
+        {
+          method: "POST",
+          body: formData
+        }
+      );
+
+      const result = await flowiseResponse.json();
+      console.log('Flowise response:', result);
+
+      // TODO: Handle the response (maybe show success message or navigate to next step)
+
+    } catch (error) {
+      console.error('Error saving project:', error);
+      setError(error.message || 'Failed to save project configuration');
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <Loader text="Loading entity data..." />
       </div>
+    );
+  }
+
+  if (showTechStack) {
+    return (
+      <TechStackSelection 
+        onBack={() => setShowTechStack(false)}
+        onSubmit={handleTechStackSubmit}
+      />
     );
   }
 
@@ -114,21 +185,32 @@ function EntityGenerationPage() {
                   {entityData?.project_description || 'No description available'}
                 </p>
               </div>
-              <button
-                onClick={handleGenerateEntities}
-                disabled={generating}
-                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-75 disabled:cursor-not-allowed"
-              >
-                {generating ? (
-                  <>
-                    <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    Generating...
-                  </>
-                ) : entityData ? 'Regenerate Entities' : 'Generate Entities'}
-              </button>
+              <div className="flex space-x-2">
+                <button
+                  onClick={handleGenerateEntities}
+                  disabled={generating}
+                  className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-75 disabled:cursor-not-allowed"
+                >
+                  {generating ? (
+                    <>
+                      <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Generating...
+                    </>
+                  ) : entityData ? 'Regenerate Entities' : 'Generate Entities'}
+                </button>
+                {entityData?.entities?.length > 0 && (
+                  <button
+                    onClick={() => setShowTechStack(true)}
+                    disabled={selectedEntities.length === 0}
+                    className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Next: Select Tech Stack
+                  </button>
+                )}
+              </div>
             </div>
           </div>
 
@@ -136,7 +218,15 @@ function EntityGenerationPage() {
             {entityData?.entities?.length > 0 ? (
               <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
                 {entityData.entities.map((entity, index) => (
-                  <EntityCard key={index} entity={entity} />
+                  <div key={index} className="relative">
+                    <input 
+                      type="checkbox"
+                      checked={selectedEntities.includes(index)}
+                      onChange={() => toggleEntitySelection(index)}
+                      className="absolute top-4 right-4 h-5 w-5 text-indigo-600 rounded border-gray-300 focus:ring-indigo-500"
+                    />
+                    <EntityCard entity={entity} />
+                  </div>
                 ))}
               </div>
             ) : (
