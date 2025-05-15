@@ -3,6 +3,7 @@ import axios from 'axios';
 import EntityCard from '../components/EntityCard';
 import Loader from './LoadingSpinner';
 import TechStackSelection from '../components/TechStackSelection';
+import { useNavigate } from 'react-router-dom';
 
 function EntityGenerationPage() {
   const [entityData, setEntityData] = useState(null);
@@ -11,12 +12,14 @@ function EntityGenerationPage() {
   const [error, setError] = useState('');
   const [selectedEntities, setSelectedEntities] = useState([]);
   const [showTechStack, setShowTechStack] = useState(false);
+  const navigate = useNavigate(); // Initialize navigate
+
 
   useEffect(() => {
     const fetchEntityData = async () => {
       try {
         const response = await axios.get('http://localhost:5000/api/entity-data');
-        
+
         if (response.data && Array.isArray(response.data.entities)) {
           setEntityData(response.data);
           // Initialize all entities as selected by default
@@ -26,8 +29,8 @@ function EntityGenerationPage() {
         }
       } catch (error) {
         console.error('Fetch Error:', error);
-        setError(error.response?.status === 404 
-          ? 'No existing entities found' 
+        setError(error.response?.status === 404
+          ? 'No existing entities found'
           : error.message || 'Failed to fetch entities');
       } finally {
         setLoading(false);
@@ -40,7 +43,7 @@ function EntityGenerationPage() {
   const handleGenerateEntities = async () => {
     setGenerating(true);
     setError('');
-    
+
     try {
       const response = await axios.post('http://localhost:5000/api/generate-entities');
       const transformedData = response.data.data ? {
@@ -55,7 +58,7 @@ function EntityGenerationPage() {
           }))
         }))
       } : null;
-      
+
       setEntityData(transformedData);
       // Initialize all new entities as selected by default
       if (transformedData?.entities) {
@@ -70,9 +73,9 @@ function EntityGenerationPage() {
   };
 
   const toggleEntitySelection = (index) => {
-    setSelectedEntities(prev => 
-      prev.includes(index) 
-        ? prev.filter(i => i !== index) 
+    setSelectedEntities(prev =>
+      prev.includes(index)
+        ? prev.filter(i => i !== index)
         : [...prev, index]
     );
   };
@@ -132,12 +135,45 @@ function EntityGenerationPage() {
 
   if (showTechStack) {
     return (
-      <TechStackSelection 
+      <TechStackSelection
         onBack={() => setShowTechStack(false)}
         onSubmit={handleTechStackSubmit}
       />
     );
   }
+  const handleProceedToTechStack = async () => {
+    if (selectedEntities.length === 0) {
+      setError('Please select at least one entity to proceed');
+      return;
+    }
+  
+    try {
+      // Prepare the selected entities data
+      const selectedEntitiesData = selectedEntities.map(index => {
+        const entity = entityData.entities[index];
+        return {
+          entity_name: entity.name || entity.Entity_Name, // Handle both possible property names
+          entity_description: entity.description || entity.Entity_Description,
+          fields: entity.fields 
+            ? entity.fields.map(field => field.name || field) // Handle both object and string fields
+            : entity.Fields || [] // Fallback to Fields or empty array
+        };
+      });
+  
+      // Save the selected entities temporarily
+      await axios.post('http://localhost:5000/api/save-selected-entities', {
+        project_name: entityData.project_name,
+        project_description: entityData.project_description,
+        entities: selectedEntitiesData
+      });
+  
+      // Navigate to the tech stack selection page
+      navigate('/tech-stack-selection');
+    } catch (error) {
+      console.error('Error saving selected entities:', error);
+      setError('Failed to save selected entities. Please try again.');
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
@@ -162,7 +198,7 @@ function EntityGenerationPage() {
               <div className="ml-3 flex-1">
                 <p className="text-sm text-red-700">{error}</p>
               </div>
-              <button 
+              <button
                 onClick={() => setError('')}
                 className="text-red-500 hover:text-red-700"
               >
@@ -219,7 +255,7 @@ function EntityGenerationPage() {
               <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
                 {entityData.entities.map((entity, index) => (
                   <div key={index} className="relative">
-                    <input 
+                    <input
                       type="checkbox"
                       checked={selectedEntities.includes(index)}
                       onChange={() => toggleEntitySelection(index)}
@@ -252,6 +288,17 @@ function EntityGenerationPage() {
           </div>
         </div>
       </div>
+      {entityData?.entities?.length > 0 && (
+        <div className="mt-6 flex justify-end">
+          <button
+            onClick={handleProceedToTechStack}
+            disabled={selectedEntities.length === 0}
+            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            Proceed to Tech Stack Selection
+          </button>
+        </div>
+      )}
     </div>
   );
 }

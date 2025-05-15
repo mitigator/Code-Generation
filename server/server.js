@@ -5,6 +5,8 @@ import { ensureDataDirExists } from './utils/fileUtils.js';
 import descriptionRoutes from './routes/descriptionRoutes.js';
 import entityRoutes from './routes/entityRoutes.js';
 import projectRoutes from './routes/projectRoutes.js';
+import scaffoldingRoutes from './routes/scaffoldingRoutes.js'; // Add this import
+
 
 
 const app = express();
@@ -20,7 +22,7 @@ ensureDataDirExists();
 // Routes
 app.use('/api', descriptionRoutes);
 app.use('/api', entityRoutes);
-app.use('/api', projectRoutes);
+app.use('/api', scaffoldingRoutes); // Add this line
 
 
 

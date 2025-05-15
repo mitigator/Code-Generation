@@ -1,0 +1,11 @@
+{
+  "json": {
+    "project_name": "abcd",
+    "folders": "server\n  models\n  controllers\n  config\nclient\n  src\n    components\n    pages\n    services\n    context\n  public",
+    "files": "server/index.js\nserver/package.json\nserver/config/database.js\nserver/config/middleware.js\nserver/models/User.js\nserver/models/Data.js\nserver/models/Visualization.js\nserver/models/Security_Measure.js\nserver/models/Collaboration.js\nserver/controllers/UserController.js\nserver/controllers/DataController.js\nserver/controllers/VisualizationController.js\nserver/controllers/Security_MeasureController.js\nserver/controllers/CollaborationController.js\nserver/routes/UserRoute.js\nserver/routes/DataRoute.js\nserver/routes/VisualizationRoute.js\nserver/routes/Security_MeasureRoute.js\nserver/routes/CollaborationRoute.js\nclient/src/index.js\nclient/src/App.js\nclient/src/components/User.js\nclient/src/components/Data.js\nclient/src/components/Visualization.js\nclient/src/components/Security_Measure.js\nclient/src/components/Collaboration.js\nclient/src/pages/Home.js\nclient/src/pages/UserPage.js\nclient/src/pages/DataPage.js\nclient/src/pages/VisualizationPage.js\nclient/src/pages/Security_MeasurePage.js\nclient/src/pages/CollaborationPage.js\nclient/src/services/api.js\nclient/src/context/store.js\nclient/public/index.html\nREADME.md\n.gitignore\n.env.example\ndocker-compose.yml"
+  },
+  "chatId": "2e395fd7-da17-4b63-bfb7-58fe93204108",
+  "chatMessageId": "792bfb61-0e66-41ae-90f8-480447409243",
+  "isStreamValid": false,
+  "sessionId": "2e395fd7-da17-4b63-bfb7-58fe93204108"
+}

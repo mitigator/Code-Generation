@@ -4,6 +4,8 @@ import './App.css'
 import Home from './pages/Home';
 import ProjectStartupPage from './components/ProjectStartup';
 import EntityGenerationPage from './components/EntityGeneration';
+import TechStackSelection from './pages/TechStackSelection';
+import TechStackConfirmation from './pages/TechStackConfirmation';
 function App() {
   const [count, setCount] = useState(0)
 
@@ -15,6 +17,8 @@ function App() {
           <Route path="/" element={<Home />} />
           <Route path="/project-startup" element={<ProjectStartupPage />} />
           <Route path="/entity-generation" element={<EntityGenerationPage />} />
+          <Route path="/tech-stack-selection" element={<TechStackSelection />} />
+          <Route path="/project-confirmation" element={<TechStackConfirmation />} />
         </Routes>
       </div>
     </Router>
