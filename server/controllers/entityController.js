@@ -62,3 +62,52 @@ export async function getEntityData(req, res) {
     res.status(404).json({ error: 'Entity data not found' });
   }
 }
+
+export async function saveSelectedEntities(req, res) {
+  try {
+    const { project_name, project_description, entities } = req.body;
+    
+    // Create the initial structure for final_entities.json
+    const finalData = {
+      project_name,
+      project_description,
+      entities,
+      stack: {}, // Will be filled in later
+      additional_config: {} // Will be filled in later
+    };
+
+    // Save to final_entities.json
+    await saveFile('final_entities.json', finalData);
+    
+    res.json({
+      success: true,
+      message: 'Selected entities saved successfully'
+    });
+  } catch (error) {
+    console.error('Error saving selected entities:', error);
+    res.status(500).json({ error: 'Failed to save selected entities' });
+  }
+}
+
+export async function finalizeProject(req, res) {
+  try {
+    // Read the existing final_entities.json
+    const finalData = await readFile('final_entities.json');
+    
+    // Update with the tech stack
+    finalData.stack = req.body.stack;
+    finalData.additional_config = req.body.additional_config;
+    
+    // Save the final configuration
+    await saveFile('final_entities.json', finalData);
+    
+    res.json({
+      success: true,
+      message: 'Project finalized successfully',
+      data: finalData
+    });
+  } catch (error) {
+    console.error('Error finalizing project:', error);
+    res.status(500).json({ error: 'Failed to finalize project' });
+  }
+}
