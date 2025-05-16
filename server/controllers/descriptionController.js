@@ -1,5 +1,9 @@
 import fetch from 'node-fetch';
 import { saveFile } from '../utils/fileUtils.js';
+import dotenv from 'dotenv';
+dotenv.config();
+
+
 
 // Handle description generation/refinement request
 export async function generateDescription(req, res) {
@@ -8,7 +12,7 @@ export async function generateDescription(req, res) {
     
     // Call Flowise API
     const response = await fetch(
-      "http://localhost:3000/api/v1/prediction/9e1a6d8c-e990-4827-9cd7-b53a9e39467d",
+      process.env.DESCRIPTION_GENERATION,
       {
         method: "POST",
         headers: {

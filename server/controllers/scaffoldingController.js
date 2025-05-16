@@ -2,19 +2,17 @@ import FormData from 'form-data';
 import fs from 'fs';
 import fetch from 'node-fetch';
 import { getFilePath, saveFile } from '../utils/fileUtils.js';
+import dotenv from 'dotenv';
+dotenv.config();
 
 export async function generateScaffolding(req, res) {
   try {
-    // Read the final_entities.json file
     const filePath = getFilePath('final_entities.json');
-    
-    // Create form-data object
-    const formData = new FormData();
+     const formData = new FormData();
     formData.append('files', fs.createReadStream(filePath));
 
-    // Call Flowise API
     const flowiseResponse = await fetch(
-      "http://localhost:3000/api/v1/prediction/342522aa-c0e8-48d3-9f56-ac90a04376ea",
+     process.env.PROJECT_SCAFFOLDING,
       {
         method: "POST",
         body: formData,
@@ -24,7 +22,6 @@ export async function generateScaffolding(req, res) {
 
     const result = await flowiseResponse.json();
 
-    // Save the scaffolding result
     await saveFile('scaffolding.json', result);
 
     res.json({
