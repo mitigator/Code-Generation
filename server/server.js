@@ -1,11 +1,10 @@
-// server/server.js
 import express from 'express';
 import cors from 'cors';
 import { ensureDataDirExists } from './utils/fileUtils.js';
 import descriptionRoutes from './routes/descriptionRoutes.js';
 import entityRoutes from './routes/entityRoutes.js';
 import projectRoutes from './routes/projectRoutes.js';
-import scaffoldingRoutes from './routes/scaffoldingRoutes.js'; // Add this import
+import scaffoldingRoutes from './routes/scaffoldingRoutes.js';
 
 
 
@@ -22,16 +21,14 @@ ensureDataDirExists();
 // Routes
 app.use('/api', descriptionRoutes);
 app.use('/api', entityRoutes);
-app.use('/api', scaffoldingRoutes); // Add this line
+app.use('/api', scaffoldingRoutes);
 
 
 
-// Add a simple route to check if server is running
 app.get('/', (req, res) => {
   res.send('Flowise Integration API is running');
 });
 
-// Debug route to check all registered routes
 app.get('/debug/routes', (req, res) => {
   const routes = [];
   app._router.stack.forEach((middleware) => {
@@ -64,7 +61,6 @@ app.get('/debug/routes', (req, res) => {
   res.json(routes);
 });
 
-// Start server
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });

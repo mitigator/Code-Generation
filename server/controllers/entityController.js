@@ -2,22 +2,19 @@ import FormData from 'form-data';
 import fetch from 'node-fetch';
 import fs from 'fs';
 import { getFilePath, saveFile, readFile } from '../utils/fileUtils.js';
+import dotenv from 'dotenv';
+dotenv.config();
 
-// Handle entity generation request
 export async function generateEntities(req, res) {
   try {
-    // Create a form-data object
     const formData = new FormData();
     
-    // Read description_generation.json file
     const filePath = getFilePath('description_generation.json');
     
-    // Add file to form-data with key 'files'
     formData.append('files', fs.createReadStream(filePath));
     
-    // Call Flowise API for entity generation
     const response = await fetch(
-      "http://localhost:3000/api/v1/prediction/bb6caff7-e079-43f7-99f7-02e7487e1ba3",
+      process.env.ENTITY_GENERATION,
       {
         method: "POST",
         body: formData,
@@ -38,7 +35,6 @@ try {
 }
 
     
-    // Save the parsed entity data to entity_generation.json
     await saveFile('entity_generation.json', entityData);
     
     res.json({
@@ -52,7 +48,6 @@ try {
   }
 }
 
-// Get generated entity data
 export async function getEntityData(req, res) {
   try {
     const entityData = await readFile('entity_generation.json');
@@ -67,16 +62,14 @@ export async function saveSelectedEntities(req, res) {
   try {
     const { project_name, project_description, entities } = req.body;
     
-    // Create the initial structure for final_entities.json
     const finalData = {
       project_name,
       project_description,
       entities,
-      stack: {}, // Will be filled in later
-      additional_config: {} // Will be filled in later
+      stack: {}, 
+      additional_config: {} 
     };
 
-    // Save to final_entities.json
     await saveFile('final_entities.json', finalData);
     
     res.json({
@@ -91,14 +84,11 @@ export async function saveSelectedEntities(req, res) {
 
 export async function finalizeProject(req, res) {
   try {
-    // Read the existing final_entities.json
     const finalData = await readFile('final_entities.json');
     
-    // Update with the tech stack
     finalData.stack = req.body.stack;
     finalData.additional_config = req.body.additional_config;
     
-    // Save the final configuration
     await saveFile('final_entities.json', finalData);
     
     res.json({
