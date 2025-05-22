@@ -16,6 +16,14 @@ function EntityGenerationPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [showConfetti, setShowConfetti] = useState(false);
   
+  // Custom entity form state
+  const [showAddEntityForm, setShowAddEntityForm] = useState(false);
+  const [customEntity, setCustomEntity] = useState({
+    Entity_Name: '',
+    Entity_Description: '',
+    Fields: ['']
+  });
+  
   // Color Scheme (matching previous components)
   const colors = {
     primary: "#3B82F6",
@@ -80,7 +88,10 @@ function EntityGenerationPage() {
             name: fieldName,
             type: 'string',
             description: ''
-          }))
+          })),
+          Entity_Name: entity.Entity_Name,
+          Entity_Description: entity.Entity_Description,
+          Fields: entity.Fields
         }))
       } : null;
 
@@ -99,6 +110,70 @@ function EntityGenerationPage() {
     }
   };
 
+  const handleAddCustomEntity = () => {
+    if (!customEntity.Entity_Name.trim() || !customEntity.Entity_Description.trim()) {
+      setError('Please provide entity name and description');
+      return;
+    }
+
+    const filteredFields = customEntity.Fields.filter(field => field.trim() !== '');
+    if (filteredFields.length === 0) {
+      setError('Please provide at least one field');
+      return;
+    }
+
+    const newEntity = {
+      Entity_Name: customEntity.Entity_Name.trim(),
+      Entity_Description: customEntity.Entity_Description.trim(),
+      Fields: filteredFields,
+      name: customEntity.Entity_Name.trim(),
+      description: customEntity.Entity_Description.trim(),
+      fields: filteredFields.map(fieldName => ({
+        name: fieldName,
+        type: 'string',
+        description: ''
+      })),
+      isCustom: true
+    };
+
+    const updatedEntityData = {
+      ...entityData,
+      entities: [...(entityData?.entities || []), newEntity]
+    };
+
+    setEntityData(updatedEntityData);
+    
+    // Auto-select the new entity
+    const newEntityIndex = updatedEntityData.entities.length - 1;
+    setSelectedEntities(prev => [...prev, newEntityIndex]);
+    
+    // Reset form
+    setCustomEntity({
+      Entity_Name: '',
+      Entity_Description: '',
+      Fields: ['']
+    });
+    setShowAddEntityForm(false);
+    setError('');
+  };
+
+  const handleCustomFieldChange = (index, value) => {
+    const updatedFields = [...customEntity.Fields];
+    updatedFields[index] = value;
+    setCustomEntity(prev => ({ ...prev, Fields: updatedFields }));
+  };
+
+  const addCustomField = () => {
+    setCustomEntity(prev => ({ ...prev, Fields: [...prev.Fields, ''] }));
+  };
+
+  const removeCustomField = (index) => {
+    if (customEntity.Fields.length > 1) {
+      const updatedFields = customEntity.Fields.filter((_, i) => i !== index);
+      setCustomEntity(prev => ({ ...prev, Fields: updatedFields }));
+    }
+  };
+
   const toggleEntitySelection = (index) => {
     setSelectedEntities(prev =>
       prev.includes(index)
@@ -109,24 +184,28 @@ function EntityGenerationPage() {
 
   const handleTechStackSubmit = async (techStack) => {
     try {
-      // Prepare the final project data
+      // Prepare the final project data with only selected entities
+      const selectedEntitiesData = selectedEntities.map(index => {
+        const entity = entityData.entities[index];
+        return {
+          Entity_Name: entity.Entity_Name || entity.name,
+          Entity_Description: entity.Entity_Description || entity.description,
+          Fields: entity.Fields || entity.fields.map(f => f.name || f)
+        };
+      });
+
       const projectData = {
         project_name: entityData.project_name,
         project_description: entityData.project_description,
-        entities: selectedEntities.map(index => {
-          const entity = entityData.entities[index];
-          return {
-            entity_name: entity.name || entity.Entity_Name,
-            entity_description: entity.description || entity.Entity_Description,
-            fields: entity.fields ? entity.fields.map(f => f.name) : entity.Fields
-          };
-        }),
+        entities: selectedEntitiesData,
         stack: techStack
       };
 
-      // Save the project data
-      const response = await axios.post('http://localhost:5000/api/save-project', {
-        projectData
+      // Save the project data with only selected entities
+      await axios.post('http://localhost:5000/api/save-final-entities', {
+        project_name: entityData.project_name,
+        project_description: entityData.project_description,
+        entities: selectedEntitiesData
       });
 
       // Send to Flowise API
@@ -398,6 +477,27 @@ function EntityGenerationPage() {
                     </>
                   )}
                 </button>
+                <button
+                  onClick={() => setShowAddEntityForm(true)}
+                  className="inline-flex items-center justify-center px-4 py-2 border text-sm font-medium rounded-md shadow-sm transition-all duration-300 transform hover:translate-y-px"
+                  style={{ 
+                    color: colors.surface,
+                    backgroundColor: colors.warning,
+                    borderColor: 'transparent',
+                    boxShadow: `0 2px 5px -1px ${colors.warning}30`
+                  }}
+                  onMouseOver={(e) => {
+                    e.currentTarget.style.backgroundColor = `${colors.warning}DD`;
+                  }}
+                  onMouseOut={(e) => {
+                    e.currentTarget.style.backgroundColor = colors.warning;
+                  }}
+                >
+                  <svg className="mr-2 h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
+                  </svg>
+                  Add Custom Entity
+                </button>
                 {entityData?.entities?.length > 0 && (
                   <button
                     onClick={handleProceedToTechStack}
@@ -425,6 +525,88 @@ function EntityGenerationPage() {
               </div>
             </div>
           </div>
+
+          {/* Custom Entity Form Modal */}
+          {showAddEntityForm && (
+            <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+              <div className="relative top-20 mx-auto p-5 border w-11/12 max-w-md shadow-lg rounded-md bg-white">
+                <div className="mt-3">
+                  <h3 className="text-lg font-medium text-gray-900 text-center mb-4">
+                    Add Custom Entity
+                  </h3>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">Entity Name</label>
+                      <input
+                        type="text"
+                        value={customEntity.Entity_Name}
+                        onChange={(e) => setCustomEntity(prev => ({ ...prev, Entity_Name: e.target.value }))}
+                        className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                        placeholder="e.g., User"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">Entity Description</label>
+                      <textarea
+                        value={customEntity.Entity_Description}
+                        onChange={(e) => setCustomEntity(prev => ({ ...prev, Entity_Description: e.target.value }))}
+                        className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                        rows="3"
+                        placeholder="Describe what this entity represents..."
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">Fields</label>
+                      {customEntity.Fields.map((field, index) => (
+                        <div key={index} className="flex mt-2">
+                          <input
+                            type="text"
+                            value={field}
+                            onChange={(e) => handleCustomFieldChange(index, e.target.value)}
+                            className="flex-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                            placeholder={`Field ${index + 1}`}
+                          />
+                          {customEntity.Fields.length > 1 && (
+                            <button
+                              type="button"
+                              onClick={() => removeCustomField(index)}
+                              className="ml-2 px-3 py-2 bg-red-500 text-white rounded-md hover:bg-red-600"
+                            >
+                              −
+                            </button>
+                          )}
+                        </div>
+                      ))}
+                      <button
+                        type="button"
+                        onClick={addCustomField}
+                        className="mt-2 px-3 py-1 bg-blue-500 text-white rounded-md hover:bg-blue-600 text-sm"
+                      >
+                        + Add Field
+                      </button>
+                    </div>
+                  </div>
+                  <div className="flex justify-end space-x-3 mt-6">
+                    <button
+                      onClick={() => {
+                        setShowAddEntityForm(false);
+                        setCustomEntity({ Entity_Name: '', Entity_Description: '', Fields: [''] });
+                      }}
+                      className="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={handleAddCustomEntity}
+                      className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600"
+                    >
+                      Add Entity
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
 
           {entityData?.entities?.length > 0 && (
             <div className="px-4 py-5 sm:px-6 border-b" style={{ borderColor: colors.borderDefault }}>
@@ -576,9 +758,9 @@ function EntityGenerationPage() {
                   className="mt-1 text-sm max-w-md mx-auto"
                   style={{ color: colors.textSecondary }}
                 >
-                  Get started by generating your first set of entities based on your project description.
+                  Get started by generating entities or adding custom ones based on your project description.
                 </p>
-                <div className="mt-6">
+                <div className="mt-6 flex gap-3 justify-center">
                   <button
                     onClick={handleGenerateEntities}
                     disabled={generating}
@@ -610,6 +792,25 @@ function EntityGenerationPage() {
                         Generate Entities
                       </>
                     )}
+                  </button>
+                  <button
+                    onClick={() => setShowAddEntityForm(true)}
+                    className="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md shadow-sm transition-all duration-300 transform hover:translate-y-px"
+                    style={{ 
+                      backgroundColor: colors.warning,
+                      color: colors.surface
+                    }}
+                    onMouseOver={(e) => {
+                      e.currentTarget.style.backgroundColor = `${colors.warning}DD`;
+                    }}
+                    onMouseOut={(e) => {
+                      e.currentTarget.style.backgroundColor = colors.warning;
+                    }}
+                  >
+                    <svg className="mr-2 h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
+                    </svg>
+                    Add Custom Entity
                   </button>
                 </div>
               </div>

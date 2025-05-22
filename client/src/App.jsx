@@ -6,6 +6,7 @@ import ProjectStartupPage from './components/ProjectStartup';
 import EntityGenerationPage from './components/EntityGeneration';
 import TechStackSelection from './pages/TechStackSelection';
 import TechStackConfirmation from './pages/TechStackConfirmation';
+import CodeGeneration from './pages/CodeGeneration';
 function App() {
   const [count, setCount] = useState(0)
 
@@ -19,6 +20,7 @@ function App() {
           <Route path="/entity-generation" element={<EntityGenerationPage />} />
           <Route path="/tech-stack-selection" element={<TechStackSelection />} />
           <Route path="/project-confirmation" element={<TechStackConfirmation />} />
+          <Route path="/code-generation" element={<CodeGeneration />} />
         </Routes>
       </div>
     </Router>

@@ -5,6 +5,7 @@ import descriptionRoutes from './routes/descriptionRoutes.js';
 import entityRoutes from './routes/entityRoutes.js';
 import projectRoutes from './routes/projectRoutes.js';
 import scaffoldingRoutes from './routes/scaffoldingRoutes.js';
+import codeGenerationRoutes from './routes/codeGenerationRoutes.js'
 
 
 
@@ -22,6 +23,7 @@ ensureDataDirExists();
 app.use('/api', descriptionRoutes);
 app.use('/api', entityRoutes);
 app.use('/api', scaffoldingRoutes);
+app.use('/api', codeGenerationRoutes);
 
 
 
