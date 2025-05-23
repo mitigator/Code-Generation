@@ -210,7 +210,7 @@ function Home() {
                   marginBottom: '2rem' 
                 }}
               >
-                Generate and refine project code with the power of FlowiseAI. Create professional applications in minutes, not hours.
+                Generate and refine project code with the power of CodePulse. Create professional applications in minutes, not hours.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
                 <button
@@ -345,7 +345,7 @@ function Home() {
         <div id="features" className="py-16" style={{ backgroundColor: colors.surface }}>
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-16">
-              <h2 className="text-3xl font-bold" style={{ color: colors.textPrimary }}>Why Choose FlowiseAI?</h2>
+              <h2 className="text-3xl font-bold" style={{ color: colors.textPrimary }}>Why Choose CodePulse ?</h2>
               <p className="mt-4 text-lg" style={{ color: colors.textSecondary }}>All the tools you need to accelerate your development workflow</p>
             </div>
             
@@ -635,7 +635,7 @@ function Home() {
                 </div>
                 <p style={{ color: colors.textSecondary }}>
                   <span className="text-xl" style={{ color: colors.primary }}>"</span>
-                  FlowiseAI has completely transformed our development workflow. We've reduced our project setup time by 80%.
+                  CodePulse has completely transformed our development workflow. We've reduced our project setup time by 80%.
                   <span className="text-xl" style={{ color: colors.primary }}>"</span>
                 </p>
                 <div className="mt-4 flex">
@@ -721,7 +721,7 @@ function Home() {
                 </div>
                 <p style={{ color: colors.textSecondary }}>
                   <span className="text-xl" style={{ color: colors.success }}>"</span>
-                  As a startup, we need to move fast. FlowiseAI helps us prototype new features in hours instead of days.
+                  As a startup, we need to move fast. CodePulse helps us prototype new features in hours instead of days.
                   <span className="text-xl" style={{ color: colors.success }}>"</span>
                 </p>
                 <div className="mt-4 flex">
@@ -1057,7 +1057,7 @@ function Home() {
             </div>
             
             <div className="mt-12 pt-8 border-t border-gray-700 flex flex-col md:flex-row justify-between items-center">
-              <p className="text-sm text-gray-400">© {new Date().getFullYear()} FlowiseAI. All rights reserved.</p>
+              <p className="text-sm text-gray-400">© {new Date().getFullYear()} CodePulse. All rights reserved.</p>
               <div className="flex space-x-6 mt-4 md:mt-0">
                 <a href="#" className="text-gray-400 hover:text-white transition-colors duration-300 text-sm">Terms of Service</a>
                 <a href="#" className="text-gray-400 hover:text-white transition-colors duration-300 text-sm">Privacy Policy</a>

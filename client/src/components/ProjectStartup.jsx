@@ -175,7 +175,7 @@ function ProjectStartupPage() {
             className="mt-3 text-xl"
             style={{ color: colors.textSecondary }}
           >
-            Define your project details to get started with FlowiseAI
+            Define your project details to get started with CodePulse
           </p>
         </div>
 
