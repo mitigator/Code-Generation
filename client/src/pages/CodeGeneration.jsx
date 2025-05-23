@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ChevronRight, ChevronDown, File, Folder, Loader2 } from 'lucide-react';
+import { ChevronRight, ChevronDown, File, Folder, Loader2, Check, Send } from 'lucide-react';
 
 const CodeGeneration = () => {
   // Color Scheme
@@ -34,6 +34,13 @@ const CodeGeneration = () => {
   const [fileTree, setFileTree] = useState(null);
   const [expandedFolders, setExpandedFolders] = useState(new Set());
   const [downloading, setDownloading] = useState(false);
+  
+  // New states for file selection
+  const [selectedFiles, setSelectedFiles] = useState(new Set());
+  const [sendingForRefinement, setSendingForRefinement] = useState(false);
+  const [refinementSuccess, setRefinementSuccess] = useState(false);
+
+  const MAX_SELECTED_FILES = 5;
 
   const handleDownloadZip = async () => {
     setDownloading(true);
@@ -69,6 +76,66 @@ const CodeGeneration = () => {
       setError(`Error downloading project: ${error.message}`);
     } finally {
       setDownloading(false);
+    }
+  };
+
+  const handleFileSelection = (file, isSelected) => {
+    setSelectedFiles(prev => {
+      const newSet = new Set(prev);
+      
+      if (isSelected && newSet.size < MAX_SELECTED_FILES) {
+        newSet.add(file.file_path);
+      } else if (!isSelected) {
+        newSet.delete(file.file_path);
+      }
+      
+      return newSet;
+    });
+  };
+
+  const handleSendForRefinement = async () => {
+    if (selectedFiles.size === 0) {
+      setError('Please select at least one file for refinement');
+      return;
+    }
+
+    setSendingForRefinement(true);
+    setError(null);
+    setRefinementSuccess(false);
+
+    try {
+      // Get the selected files data
+      const selectedFilesData = fileData.filter(file => 
+        selectedFiles.has(file.file_path)
+      );
+
+      const response = await fetch('http://localhost:5000/api/code-generation/send-for-refinement', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          selected_files: selectedFilesData
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`Server responded with ${response.status}`);
+      }
+
+      const result = await response.json();
+      setRefinementSuccess(true);
+      
+      // Clear selections after successful send
+      setSelectedFiles(new Set());
+      
+      setTimeout(() => setRefinementSuccess(false), 3000);
+
+    } catch (error) {
+      console.error('Error sending files for refinement:', error);
+      setError(`Error sending files for refinement: ${error.message}`);
+    } finally {
+      setSendingForRefinement(false);
     }
   };
 
@@ -209,6 +276,7 @@ const CodeGeneration = () => {
   const FileTreeNode = ({ node, level = 0 }) => {
     const isExpanded = expandedFolders.has(node.path);
     const isSelected = selectedFile && node.data && selectedFile.file_path === node.data.file_path;
+    const isFileSelected = node.data && selectedFiles.has(node.data.file_path);
 
     const handleClick = () => {
       if (node.type === 'file') {
@@ -218,17 +286,35 @@ const CodeGeneration = () => {
       }
     };
 
+    const handleCheckboxChange = (e) => {
+      e.stopPropagation();
+      if (node.data) {
+        handleFileSelection(node.data, !isFileSelected);
+      }
+    };
+
     return (
       <div className={`ml-${level * 4}`}>
         <div
           className={`flex items-center p-2 cursor-pointer rounded transition-colors
-                    ${isSelected ? 'bg-blue-100' : 'hover:bg-gray-50'}`}
+                    ${isSelected ? 'bg-blue-100' : 'hover:bg-gray-50'}
+                    ${isFileSelected ? 'bg-green-50 border-l-2 border-green-400' : ''}`}
           onClick={handleClick}
           style={{
             marginLeft: `${level * 12}px`,
             transition: 'background-color 0.2s ease'
           }}
         >
+          {node.type === 'file' && (
+            <input
+              type="checkbox"
+              checked={isFileSelected}
+              onChange={handleCheckboxChange}
+              disabled={!isFileSelected && selectedFiles.size >= MAX_SELECTED_FILES}
+              className="mr-2 h-4 w-4 text-green-600 rounded border-gray-300 focus:ring-green-500"
+            />
+          )}
+          
           {node.type === 'folder' ? (
             <>
               <span className="mr-1">
@@ -244,8 +330,13 @@ const CodeGeneration = () => {
           ) : (
             <>
               <span className="ml-6"></span>
-              <File size={16} className="text-blue-500 mr-2" />
-              <span className="text-gray-800 truncate">{node.name}</span>
+              <File size={16} className={`mr-2 ${isFileSelected ? 'text-green-500' : 'text-blue-500'}`} />
+              <span className={`text-gray-800 truncate ${isFileSelected ? 'font-medium' : ''}`}>
+                {node.name}
+              </span>
+              {isFileSelected && (
+                <Check size={14} className="text-green-500 ml-auto" />
+              )}
             </>
           )}
         </div>
@@ -344,8 +435,6 @@ const CodeGeneration = () => {
           </div>
         )}
 
-        
-
         {loading && (
           <div className="p-8 flex justify-center">
             <div className="flex flex-col items-center">
@@ -374,28 +463,84 @@ const CodeGeneration = () => {
           </div>
         )}
 
-        {fileTree && (
-          <div className="grid grid-cols-1 lg:grid-cols-4">
-            <div
-              className="border-r p-4 overflow-auto max-h-[70vh] lg:col-span-1"
-              style={{ backgroundColor: colors.surface, borderColor: colors.borderDefault }}
-            >
-              <h2 className="text-lg font-semibold mb-3 text-gray-800">Project Files</h2>
-              <div className="overflow-y-auto" style={{ maxHeight: 'calc(70vh - 50px)' }}>
-                {Object.values(fileTree.children).map(childNode => (
-                  <FileTreeNode key={childNode.path} node={childNode} />
-                ))}
-              </div>
+        {refinementSuccess && (
+          <div className="m-4 p-4 rounded-lg animate-fadeIn flex items-start bg-green-50 border border-green-200">
+            <div className="text-green-500 mr-3 mt-0.5">
+              <Check size={20} />
             </div>
-
-            <div
-              className="p-4 lg:col-span-3"
-              style={{ backgroundColor: colors.surface }}
-            >
-              <h2 className="text-lg font-semibold mb-3 text-gray-800">File Content</h2>
-              <FileContent file={selectedFile} />
+            <div>
+              <h3 className="font-medium text-green-800">Success</h3>
+              <p className="text-green-700">Files sent for refinement successfully!</p>
             </div>
           </div>
+        )}
+
+        {fileTree && (
+          <>
+            {/* File Selection Controls */}
+            <div className="p-4 bg-gray-50 border-b flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div className="flex items-center gap-4">
+                <div className="text-sm text-gray-600">
+                  Selected: <span className="font-medium text-gray-800">{selectedFiles.size}</span> / {MAX_SELECTED_FILES} files
+                </div>
+                {selectedFiles.size > 0 && (
+                  <button
+                    onClick={() => setSelectedFiles(new Set())}
+                    className="text-sm text-red-600 hover:text-red-800 underline"
+                  >
+                    Clear Selection
+                  </button>
+                )}
+              </div>
+              
+              <button
+                onClick={handleSendForRefinement}
+                disabled={selectedFiles.size === 0 || sendingForRefinement}
+                className={`px-4 py-2 rounded-lg font-medium transition-all duration-300 flex items-center
+                          ${selectedFiles.size === 0 || sendingForRefinement
+                            ? 'bg-gray-300 cursor-not-allowed text-gray-500'
+                            : 'bg-green-500 hover:bg-green-600 text-white shadow-md hover:shadow-lg'
+                          }`}
+              >
+                {sendingForRefinement ? (
+                  <>
+                    <Loader2 className="animate-spin mr-2" size={16} />
+                    Sending...
+                  </>
+                ) : (
+                  <>
+                    <Send className="mr-2" size={16} />
+                    Send for Refinement
+                  </>
+                )}
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-4">
+              <div
+                className="border-r p-4 overflow-auto max-h-[70vh] lg:col-span-1"
+                style={{ backgroundColor: colors.surface, borderColor: colors.borderDefault }}
+              >
+                <h2 className="text-lg font-semibold mb-3 text-gray-800">Project Files</h2>
+                <div className="text-xs text-gray-500 mb-3">
+                  Check files to select for refinement (max {MAX_SELECTED_FILES})
+                </div>
+                <div className="overflow-y-auto" style={{ maxHeight: 'calc(70vh - 100px)' }}>
+                  {Object.values(fileTree.children).map(childNode => (
+                    <FileTreeNode key={childNode.path} node={childNode} />
+                  ))}
+                </div>
+              </div>
+
+              <div
+                className="p-4 lg:col-span-3"
+                style={{ backgroundColor: colors.surface }}
+              >
+                <h2 className="text-lg font-semibold mb-3 text-gray-800">File Content</h2>
+                <FileContent file={selectedFile} />
+              </div>
+            </div>
+          </>
         )}
       </div>
     </div>

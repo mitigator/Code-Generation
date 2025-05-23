@@ -72,7 +72,7 @@ export const generateCode = async (req, res) => {
 
     // Call the Flowise API
     const response = await fetch(
-      "http://localhost:3000/api/v1/prediction/39010780-2759-4841-9c64-f5ab307a1eaf",
+      process.env.CODE_GENERATION,
       {
         method: "POST",
         body: form,
@@ -141,3 +141,145 @@ export const getCodeGenOutput = async (req, res) => {
   }
 };
 
+// New function to handle selected files for refinement
+export const sendForRefinement = async (req, res) => {
+  try {
+    const { selected_files } = req.body;
+
+    // Validate input
+    if (!selected_files || !Array.isArray(selected_files)) {
+      return res.status(400).json({ 
+        error: 'Invalid input: selected_files must be an array' 
+      });
+    }
+
+    // Check if we have files
+    if (selected_files.length === 0) {
+      return res.status(400).json({ 
+        error: 'No files selected for refinement' 
+      });
+    }
+
+    // Check maximum limit
+    if (selected_files.length > 5) {
+      return res.status(400).json({ 
+        error: 'Maximum 5 files can be selected for refinement' 
+      });
+    }
+
+    // Validate each file has required properties
+    for (const file of selected_files) {
+      if (!file.file_path || !file.code) {
+        return res.status(400).json({ 
+          error: 'Each file must have file_path and code properties' 
+        });
+      }
+    }
+
+    // Prepare refinement data
+    const refinementData = {
+      timestamp: new Date().toISOString(),
+      total_files: selected_files.length,
+      selected_files: selected_files.map(file => ({
+        file_path: file.file_path,
+        code: file.code,
+        description: file.description || null,
+        language: file.file_path.split('.').pop() || 'unknown'
+      }))
+    };
+
+    // Save to refinementCodeInput.json
+    const dataDir = path.join(__dirname, '..', 'data');
+    
+    // Ensure data directory exists
+    if (!fs.existsSync(dataDir)) {
+      fs.mkdirSync(dataDir, { recursive: true });
+    }
+
+    const refinementFilePath = path.join(dataDir, 'refinementCodeInput.json');
+    fs.writeFileSync(refinementFilePath, JSON.stringify(refinementData, null, 2));
+
+    console.log(`Refinement data saved with ${selected_files.length} files:`);
+    console.log('Files selected for refinement:');
+    selected_files.forEach((file, index) => {
+      console.log(`${index + 1}. ${file.file_path}`);
+    });
+
+    res.json({
+      success: true,
+      message: 'Files prepared for refinement successfully',
+      data: {
+        total_files: selected_files.length,
+        file_paths: selected_files.map(f => f.file_path),
+        saved_to: 'refinementCodeInput.json',
+        timestamp: refinementData.timestamp
+      }
+    });
+
+  } catch (error) {
+    console.error('Error in sendForRefinement:', error);
+    res.status(500).json({
+      error: 'Failed to prepare files for refinement',
+      message: error.message
+    });
+  }
+};
+
+// Function to check if refinement input file exists
+export const checkRefinementInput = async (req, res) => {
+  try {
+    const dataDir = path.join(__dirname, '..', 'data');
+    const refinementFilePath = path.join(dataDir, 'refinementCodeInput.json');
+    
+    const exists = fs.existsSync(refinementFilePath);
+    
+    let data = null;
+    if (exists) {
+      const fileContent = fs.readFileSync(refinementFilePath, 'utf8');
+      const parsedData = JSON.parse(fileContent);
+      data = {
+        timestamp: parsedData.timestamp,
+        total_files: parsedData.total_files,
+        file_paths: parsedData.selected_files.map(f => f.file_path)
+      };
+    }
+    
+    res.json({ exists, data });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+// Function to get refinement input data
+export const getRefinementInput = async (req, res) => {
+  try {
+    const dataDir = path.join(__dirname, '..', 'data');
+    const refinementFilePath = path.join(dataDir, 'refinementCodeInput.json');
+    
+    if (!fs.existsSync(refinementFilePath)) {
+      return res.status(404).json({ error: 'refinementCodeInput.json not found' });
+    }
+    
+    const data = fs.readFileSync(refinementFilePath, 'utf8');
+    res.json(JSON.parse(data));
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+// Function to delete refinement input file (optional utility)
+export const clearRefinementInput = async (req, res) => {
+  try {
+    const dataDir = path.join(__dirname, '..', 'data');
+    const refinementFilePath = path.join(dataDir, 'refinementCodeInput.json');
+    
+    if (fs.existsSync(refinementFilePath)) {
+      fs.unlinkSync(refinementFilePath);
+      res.json({ success: true, message: 'Refinement input cleared successfully' });
+    } else {
+      res.json({ success: true, message: 'No refinement input file to clear' });
+    }
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};

@@ -1,6 +1,9 @@
 import express from 'express';
 import { combineJsonFiles } from '../controllers/codeGenerationController.js';
-import { generateCode, checkCodeGenOutput, getCodeGenOutput } from '../controllers/codeGenerationController.js';
+import { generateCode, checkCodeGenOutput, getCodeGenOutput,sendForRefinement,
+  checkRefinementInput,
+  getRefinementInput,
+  clearRefinementInput } from '../controllers/codeGenerationController.js';
 
 
 const router = express.Router();
@@ -42,6 +45,11 @@ router.post('/code-generation/generate', generateCode);
 
 router.get('/code-generation/check', checkCodeGenOutput);
 router.get('/code-generation/get-data', getCodeGenOutput);
+
+router.post('/code-generation/send-for-refinement', sendForRefinement);
+router.get('/code-generation/check-refinement', checkRefinementInput);
+router.get('/code-generation/get-refinement-data', getRefinementInput);
+router.delete('/code-generation/clear-refinement', clearRefinementInput);
 
 
 

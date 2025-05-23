@@ -280,52 +280,29 @@ const GenerationStatus = ({ progress, filesGenerated, totalFiles }) => {
   );
 };
 
-// Completely rewritten buildFileTree function for proper hierarchy
+// Fixed buildFileTree function to eliminate duplicates
 const buildFileTree = (foldersStr, filesStr) => {
-  const root = { name: 'root', path: '', type: 'folder', children: [], depth: -1 };
-  const stack = [root]; // Stack to keep track of current parent at each depth level
-
-  // Parse folders first
-  if (foldersStr) {
-    const lines = foldersStr.split('\n').filter(line => line.trim());
+  const root = { name: 'root', path: '', type: 'folder', children: [] };
+  const pathMap = new Map(); // Use Map to track all created paths
+  
+  // Helper function to create or get a folder node
+  const createOrGetFolder = (path, name) => {
+    if (pathMap.has(path)) {
+      return pathMap.get(path);
+    }
     
-    lines.forEach(line => {
-      // Calculate depth based on leading spaces (2 spaces = 1 level)
-      const leadingSpaces = line.search(/\S/);
-      const depth = Math.floor(leadingSpaces / 2);
-      const folderName = line.trim().replace(/\/$/, ''); // Remove trailing slash
-      
-      if (!folderName) return;
-      
-      // Adjust stack to current depth
-      while (stack.length > depth + 1) {
-        stack.pop();
-      }
-      
-      // Get current parent
-      const parent = stack[stack.length - 1];
-      
-      // Build full path
-      const fullPath = parent.path ? `${parent.path}/${folderName}` : folderName;
-      
-      // Create folder node
-      const folderNode = {
-        name: folderName,
-        path: fullPath,
-        type: 'folder',
-        children: [],
-        depth: depth
-      };
-      
-      // Add to parent's children
-      parent.children.push(folderNode);
-      
-      // Push to stack for potential children
-      stack.push(folderNode);
-    });
-  }
+    const folderNode = {
+      name: name,
+      path: path,
+      type: 'folder',
+      children: []
+    };
+    
+    pathMap.set(path, folderNode);
+    return folderNode;
+  };
 
-  // Then parse files and add them to their respective folders
+  // First, process all files and create necessary folder structure
   if (filesStr) {
     const fileLines = filesStr.split('\n').filter(line => line.trim());
     
@@ -336,34 +313,23 @@ const buildFileTree = (foldersStr, filesStr) => {
       
       if (!fileName) return;
       
-      // Find the correct parent folder
+      // Create folder hierarchy for this file
       let current = root;
       let currentPath = '';
       
       parts.forEach(part => {
+        const parentPath = currentPath;
         currentPath = currentPath ? `${currentPath}/${part}` : part;
         
-        // Find existing folder or create it
+        // Check if folder already exists
         let found = current.children.find(child => 
           child.type === 'folder' && child.name === part
         );
         
         if (!found) {
-          // Create missing folder
-          found = {
-            name: part,
-            path: currentPath,
-            type: 'folder',
-            children: [],
-            depth: currentPath.split('/').length - 1
-          };
+          // Create new folder
+          found = createOrGetFolder(currentPath, part);
           current.children.push(found);
-          
-          // Sort children after adding
-          current.children.sort((a, b) => {
-            if (a.type !== b.type) return a.type === 'folder' ? -1 : 1;
-            return a.name.localeCompare(b.name);
-          });
         }
         
         current = found;
@@ -377,24 +343,27 @@ const buildFileTree = (foldersStr, filesStr) => {
       };
       
       current.children.push(fileNode);
-      
-      // Sort children after adding file
-      current.children.sort((a, b) => {
-        if (a.type !== b.type) return a.type === 'folder' ? -1 : 1;
-        return a.name.localeCompare(b.name);
-      });
     });
   }
 
-  // Final sort of all children recursively
+  // Sort all children recursively (folders first, then alphabetically)
   const sortAllChildren = (node) => {
     if (node.children && node.children.length > 0) {
       node.children.sort((a, b) => {
-        if (a.type !== b.type) return a.type === 'folder' ? -1 : 1;
+        // Folders first
+        if (a.type !== b.type) {
+          return a.type === 'folder' ? -1 : 1;
+        }
+        // Then alphabetically
         return a.name.localeCompare(b.name);
       });
       
-      node.children.forEach(sortAllChildren);
+      // Recursively sort children
+      node.children.forEach(child => {
+        if (child.type === 'folder') {
+          sortAllChildren(child);
+        }
+      });
     }
   };
 
