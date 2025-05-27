@@ -12,9 +12,7 @@ const router = express.Router();
 router.get('/combine-json', async (req, res) => {
   try {
     const result = await combineJsonFiles();
-    
-    console.log('Combination result:', result);  // Log the full result
-    
+      
     if (result.success) {
       res.status(200).json({
         success: true,

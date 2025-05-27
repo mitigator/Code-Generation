@@ -29,7 +29,6 @@ export const combineJsonFiles = async () => {
 
     // Log the combined data to console
     console.log('Generated Combined Data:');
-    console.log(JSON.stringify(combinedData, null, 2));
 
     // Write the combined data to codeGenInput.json
     const outputPath = path.join(__dirname, '../data/codeGenInput.json');

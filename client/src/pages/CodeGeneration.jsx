@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ChevronRight, ChevronDown, File, Folder, Loader2, Check, Send } from 'lucide-react';
+import { ChevronRight, ChevronDown, File, Folder, Loader2, Check, Send, Download, Archive } from 'lucide-react';
 
 const CodeGeneration = () => {
   // Color Scheme
@@ -39,9 +39,64 @@ const CodeGeneration = () => {
   const [selectedFiles, setSelectedFiles] = useState(new Set());
   const [sendingForRefinement, setSendingForRefinement] = useState(false);
   const [refinementSuccess, setRefinementSuccess] = useState(false);
+  
+  // NEW: Page navigation state
+  const [currentPage, setCurrentPage] = useState('generation'); // 'generation' or 'refinement'
 
   const MAX_SELECTED_FILES = 5;
 
+  // NEW: Client-side ZIP download functionality
+  const handleDownloadZipClient = async () => {
+    setDownloading(true);
+    try {
+      // Load JSZip dynamically
+      const script = document.createElement('script');
+      script.src = 'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js';
+      
+      // Wait for JSZip to load
+      await new Promise((resolve, reject) => {
+        script.onload = resolve;
+        script.onerror = reject;
+        document.head.appendChild(script);
+      });
+
+      // Create new ZIP instance
+      const zip = new window.JSZip();
+
+      // Add each file to the zip with proper folder structure
+      if (fileData) {
+        fileData.forEach(file => {
+          zip.file(file.file_path, file.code);
+        });
+      }
+
+      // Generate the zip file
+      const content = await zip.generateAsync({ type: "blob" });
+
+      // Create download link
+      const url = window.URL.createObjectURL(content);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'project.zip';
+      document.body.appendChild(a);
+      a.click();
+
+      // Cleanup
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+
+      // Show success message
+      alert('Project downloaded successfully!');
+
+    } catch (error) {
+      console.error('Error downloading zip:', error);
+      setError(`Error downloading project: ${error.message}`);
+    } finally {
+      setDownloading(false);
+    }
+  };
+
+  // Your existing backend ZIP download (keeping as is)
   const handleDownloadZip = async () => {
     setDownloading(true);
     try {
@@ -93,51 +148,75 @@ const CodeGeneration = () => {
     });
   };
 
+  // MODIFIED: Added navigation to refinement page after successful send
   const handleSendForRefinement = async () => {
-    if (selectedFiles.size === 0) {
-      setError('Please select at least one file for refinement');
-      return;
+  if (selectedFiles.size === 0) {
+    setError('Please select at least one file for refinement');
+    return;
+  }
+
+  setSendingForRefinement(true);
+  setError(null);
+  setRefinementSuccess(false);
+
+  try {
+    // Get the selected files data
+    const selectedFilesData = fileData.filter(file => 
+      selectedFiles.has(file.file_path)
+    );
+
+    const response = await fetch('http://localhost:5000/api/code-generation/send-for-refinement', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        selected_files: selectedFilesData
+      })
+    });
+
+    if (!response.ok) {
+      throw new Error(`Server responded with ${response.status}`);
     }
 
-    setSendingForRefinement(true);
-    setError(null);
-    setRefinementSuccess(false);
-
+    const result = await response.json();
+    setRefinementSuccess(true);
+    
+    // Clear selections after successful send
+    setSelectedFiles(new Set());
+    
+    // NEW: Call combine-json API and navigate to refinement page
     try {
-      // Get the selected files data
-      const selectedFilesData = fileData.filter(file => 
-        selectedFiles.has(file.file_path)
-      );
-
-      const response = await fetch('http://localhost:5000/api/code-generation/send-for-refinement', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          selected_files: selectedFilesData
-        })
+      const combineResponse = await fetch('http://localhost:5000/api/code-refinement/combine-json', {
+        method: 'GET'
       });
-
-      if (!response.ok) {
-        throw new Error(`Server responded with ${response.status}`);
+      
+      if (!combineResponse.ok) {
+        console.warn('Combine JSON API failed, but proceeding to refinement page');
       }
-
-      const result = await response.json();
-      setRefinementSuccess(true);
       
-      // Clear selections after successful send
-      setSelectedFiles(new Set());
+      // Navigate to refinement page
+      setTimeout(() => {
+        window.location.href = '/code-refinement';;
+        setRefinementSuccess(false);
+      }, 1500);
       
-      setTimeout(() => setRefinementSuccess(false), 3000);
-
-    } catch (error) {
-      console.error('Error sending files for refinement:', error);
-      setError(`Error sending files for refinement: ${error.message}`);
-    } finally {
-      setSendingForRefinement(false);
+    } catch (combineError) {
+      console.error('Error calling combine-json:', combineError);
+      // Still navigate even if combine fails
+      setTimeout(() => {
+        window.location.href = '/code-refinement';;
+        setRefinementSuccess(false);
+      }, 1500);
     }
-  };
+
+  } catch (error) {
+    console.error('Error sending files for refinement:', error);
+    setError(`Error sending files for refinement: ${error.message}`);
+  } finally {
+    setSendingForRefinement(false);
+  }
+};
 
   useEffect(() => {
     checkForExistingData();
@@ -273,6 +352,7 @@ const CodeGeneration = () => {
     });
   };
 
+  // MODIFIED: Added condition to show/hide checkboxes based on current page
   const FileTreeNode = ({ node, level = 0 }) => {
     const isExpanded = expandedFolders.has(node.path);
     const isSelected = selectedFile && node.data && selectedFile.file_path === node.data.file_path;
@@ -305,7 +385,7 @@ const CodeGeneration = () => {
             transition: 'background-color 0.2s ease'
           }}
         >
-          {node.type === 'file' && (
+          {node.type === 'file' && currentPage === 'generation' && (
             <input
               type="checkbox"
               checked={isFileSelected}
@@ -329,12 +409,12 @@ const CodeGeneration = () => {
             </>
           ) : (
             <>
-              <span className="ml-6"></span>
+              <span className={currentPage === 'generation' ? "ml-6" : ""}></span>
               <File size={16} className={`mr-2 ${isFileSelected ? 'text-green-500' : 'text-blue-500'}`} />
               <span className={`text-gray-800 truncate ${isFileSelected ? 'font-medium' : ''}`}>
                 {node.name}
               </span>
-              {isFileSelected && (
+              {isFileSelected && currentPage === 'generation' && (
                 <Check size={14} className="text-green-500 ml-auto" />
               )}
             </>
@@ -400,6 +480,128 @@ const CodeGeneration = () => {
       </div>
     </div>
   );
+
+  // NEW: Code Refinement Page Component
+  const CodeRefinementPage = () => (
+    <div className="p-6 max-w-screen-xl mx-auto" style={{ backgroundColor: colors.background }}>
+      <div className="bg-white rounded-xl shadow-sm overflow-hidden" style={{ borderColor: colors.borderDefault }}>
+        <div className="p-6 border-b flex justify-between items-center" style={{ borderColor: colors.borderDefault }}>
+          <div>
+            <h1 className="text-2xl font-bold text-gray-800">Code Refinement</h1>
+            <p className="text-gray-600 mt-1">Review and download your refined project files</p>
+          </div>
+          <button
+            onClick={() => setCurrentPage('generation')}
+            className="px-4 py-2 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-lg transition-colors"
+          >
+            ← Back to Generation
+          </button>
+        </div>
+
+        <div className="p-6 border-b bg-gradient-to-r from-green-50 to-blue-50" style={{ borderColor: colors.borderDefault }}>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div className="flex items-center">
+              <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mr-4">
+                <Check className="text-green-600" size={24} />
+              </div>
+              <div>
+                <h3 className="font-semibold text-gray-800">Files Successfully Sent for Refinement</h3>
+                <p className="text-gray-600">Your selected files have been processed and are ready for download</p>
+              </div>
+            </div>
+            
+            <div className="flex gap-3">
+              <button
+                onClick={handleDownloadZip}
+                disabled={downloading}
+                className={`px-6 py-3 rounded-lg font-medium transition-all duration-300 flex items-center shadow-md hover:shadow-lg
+                          ${downloading ? 'bg-blue-400 cursor-not-allowed' : 'bg-blue-500 hover:bg-blue-600'}
+                          text-white`}
+              >
+                {downloading ? (
+                  <>
+                    <Loader2 className="animate-spin mr-2" size={18} />
+                    Preparing Download...
+                  </>
+                ) : (
+                  <>
+                    <Archive className="mr-2" size={18} />
+                    Download ZIP
+                  </>
+                )}
+              </button>
+              
+              <button
+                onClick={handleDownloadZipClient}
+                disabled={downloading}
+                className={`px-4 py-2 rounded-lg font-medium transition-all duration-300 flex items-center border
+                          ${downloading ? 'border-gray-300 text-gray-400 cursor-not-allowed' : 'border-blue-500 text-blue-600 hover:bg-blue-50'}
+                          bg-white`}
+              >
+                {downloading ? (
+                  <>
+                    <Loader2 className="animate-spin mr-2" size={16} />
+                    Processing...
+                  </>
+                ) : (
+                  <>
+                    <Download className="mr-2" size={16} />
+                    Quick Download
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {error && (
+          <div className="m-4 p-4 rounded-lg animate-fadeIn flex items-start bg-red-50 border border-red-200">
+            <div className="text-red-500 mr-3 mt-0.5">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+              </svg>
+            </div>
+            <div>
+              <h3 className="font-medium text-red-800">Error</h3>
+              <p className="text-red-700">{error}</p>
+            </div>
+          </div>
+        )}
+
+        {fileTree && (
+          <div className="grid grid-cols-1 lg:grid-cols-4">
+            <div
+              className="border-r p-4 overflow-auto max-h-[70vh] lg:col-span-1"
+              style={{ backgroundColor: colors.surface, borderColor: colors.borderDefault }}
+            >
+              <h2 className="text-lg font-semibold mb-3 text-gray-800">Refined Project Files</h2>
+              <div className="text-xs text-gray-500 mb-3">
+                {fileData?.length || 0} files in the project
+              </div>
+              <div className="overflow-y-auto" style={{ maxHeight: 'calc(70vh - 100px)' }}>
+                {Object.values(fileTree.children).map(childNode => (
+                  <FileTreeNode key={childNode.path} node={childNode} />
+                ))}
+              </div>
+            </div>
+
+            <div
+              className="p-4 lg:col-span-3"
+              style={{ backgroundColor: colors.surface }}
+            >
+              <h2 className="text-lg font-semibold mb-3 text-gray-800">File Content</h2>
+              <FileContent file={selectedFile} />
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+
+  // NEW: Conditional rendering based on current page
+  if (currentPage === 'refinement') {
+    return <CodeRefinementPage />;
+  }
 
   return (
     <div className="p-6 max-w-screen-xl mx-auto" style={{ backgroundColor: colors.background }}>
@@ -470,7 +672,7 @@ const CodeGeneration = () => {
             </div>
             <div>
               <h3 className="font-medium text-green-800">Success</h3>
-              <p className="text-green-700">Files sent for refinement successfully!</p>
+              <p className="text-green-700">Files sent for refinement successfully! Redirecting...</p>
             </div>
           </div>
         )}
@@ -493,27 +695,51 @@ const CodeGeneration = () => {
                 )}
               </div>
               
-              <button
-                onClick={handleSendForRefinement}
-                disabled={selectedFiles.size === 0 || sendingForRefinement}
-                className={`px-4 py-2 rounded-lg font-medium transition-all duration-300 flex items-center
-                          ${selectedFiles.size === 0 || sendingForRefinement
-                            ? 'bg-gray-300 cursor-not-allowed text-gray-500'
-                            : 'bg-green-500 hover:bg-green-600 text-white shadow-md hover:shadow-lg'
-                          }`}
-              >
-                {sendingForRefinement ? (
-                  <>
-                    <Loader2 className="animate-spin mr-2" size={16} />
-                    Sending...
-                  </>
-                ) : (
-                  <>
-                    <Send className="mr-2" size={16} />
-                    Send for Refinement
-                  </>
-                )}
-              </button>
+              <div className="flex gap-3">
+                <button
+                  onClick={handleDownloadZipClient}
+                  disabled={downloading}
+                  className={`px-4 py-2 rounded-lg font-medium transition-all duration-300 flex items-center
+                            ${downloading
+                              ? 'bg-gray-300 cursor-not-allowed text-gray-500'
+                              : 'bg-gray-500 hover:bg-gray-600 text-white shadow-md hover:shadow-lg'
+                            }`}
+                >
+                  {downloading ? (
+                    <>
+                      <Loader2 className="animate-spin mr-2" size={16} />
+                      Downloading...
+                    </>
+                  ) : (
+                    <>
+                      <Download className="mr-2" size={16} />
+                      Download ZIP
+                    </>
+                  )}
+                </button>
+
+                <button
+                  onClick={handleSendForRefinement}
+                  disabled={selectedFiles.size === 0 || sendingForRefinement}
+                  className={`px-4 py-2 rounded-lg font-medium transition-all duration-300 flex items-center
+                            ${selectedFiles.size === 0 || sendingForRefinement
+                              ? 'bg-gray-300 cursor-not-allowed text-gray-500'
+                              : 'bg-green-500 hover:bg-green-600 text-white shadow-md hover:shadow-lg'
+                            }`}
+                >
+                  {sendingForRefinement ? (
+                    <>
+                      <Loader2 className="animate-spin mr-2" size={16} />
+                      Sending...
+                    </>
+                  ) : (
+                    <>
+                      <Send className="mr-2" size={16} />
+                      Send for Refinement
+                    </>
+                  )}
+                </button>
+              </div>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-4">
