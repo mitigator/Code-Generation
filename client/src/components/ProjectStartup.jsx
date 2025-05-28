@@ -169,7 +169,7 @@ function ProjectStartupPage() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col" style={{
+    <div className="min-h-screen flex flex-col " style={{
       fontFamily: "'Inter', sans-serif",
       background: `linear-gradient(135deg, ${colors.background} 0%, ${colors.primaryLight}30 100%)`
     }}>
@@ -184,47 +184,113 @@ function ProjectStartupPage() {
           className="max-w-4xl mx-auto "
         >
           {/* Progress tracker */}
-          <motion.div variants={itemVariants} className="mb-8">
-            <div className="flex items-center justify-between overflow-x-auto pb-4"
-              style={{
-                msOverflowStyle: 'none',  /* IE 10+ */
-                scrollbarWidth: 'none',    /* Firefox */
-              }}>
-              {steps.map((step, index) => (
-                <div key={step.id} className="flex items-center flex-shrink-0 ">
-                  <motion.div
-                    className="flex items-center"
-                    whileHover={{ scale: 1.05 }}
-                    transition={{ type: "spring", stiffness: 400, damping: 25 }}
-                  >
-                    <div
-                      className="flex items-center justify-center w-10 h-10 rounded-full text-white font-bold text-sm transition-all duration-300"
-                      style={{
-                        backgroundColor: step.current ? colors.primary : `${colors.textLight}40`,
-                        boxShadow: step.current ? `0 4px 8px ${colors.primary}30` : 'none'
-                      }}
-                    >
-                      {step.id}
-                    </div>
-                    <div className="ml-3">
-                      <span
-                        className="text-sm font-medium whitespace-nowrap"
-                        style={{ color: step.current ? colors.textPrimary : colors.textLight }}
+          <div className="max-w-7xl mx-auto mb-8  ">
+            <div className="bg-white rounded-lg shadow-sm p-6 " style={{ backgroundColor: colors.surface, border: `1px solid ${colors.borderDefault}` }}>
+              <div className="flex items-center justify-between w-[70%]">
+                {[
+                  { id: 1, name: 'Project Setup', current: true, completed: false },
+                  { id: 2, name: 'Entity Generation', current: false, completed: false },
+                  { id: 3, name: 'TechStack Selection', current: false, completed: false },
+                  { id: 4, name: 'Folder Scaffolding', current: false, completed: false },
+                  { id: 5, name: 'Code Generation', current: false, completed: false },
+                  { id: 6, name: 'Code Refinement', current: false, completed: false }
+                ].map((step, stepIdx) => (
+                  <React.Fragment key={step.id}>
+                    <div className="flex items-center">
+                      <div
+                        className={`flex items-center justify-center w-8 h-8 rounded-full text-sm font-bold transition-all duration-200 ${step.completed || step.current ? 'text-white' : 'text-gray-500'
+                          }`}
+                        style={{
+                          backgroundColor: step.completed
+                            ? colors.success
+                            : step.current
+                              ? colors.primary
+                              : `${colors.textLight}40`
+                        }}
                       >
-                        {step.name}
-                      </span>
+                        {step.completed ? (
+                          <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                          </svg>
+                        ) : (
+                          step.id
+                        )}
+                      </div>
+                      <div className="ml-3 hidden sm:block">
+                        <span
+                          className={`text-sm font-medium ${step.completed || step.current ? '' : 'opacity-50'
+                            }`}
+                          style={{
+                            color: step.completed || step.current ? colors.textPrimary : colors.textLight
+                          }}
+                        >
+                          {step.name}
+                        </span>
+                        {step.current && (
+                          <div className="flex items-center mt-1">
+                            <div className="flex space-x-1">
+                              <div
+                                className="w-2 h-2 rounded-full animate-pulse"
+                                style={{ backgroundColor: colors.primary }}
+                              ></div>
+                              <div
+                                className="w-2 h-2 rounded-full animate-pulse"
+                                style={{
+                                  backgroundColor: colors.primary,
+                                  animationDelay: '0.2s'
+                                }}
+                              ></div>
+                              <div
+                                className="w-2 h-2 rounded-full animate-pulse"
+                                style={{
+                                  backgroundColor: colors.primary,
+                                  animationDelay: '0.4s'
+                                }}
+                              ></div>
+                            </div>
+                            <span
+                              className="ml-2 text-xs"
+                              style={{ color: colors.primary }}
+                            >
+                              In Progress
+                            </span>
+                          </div>
+                        )}
+                      </div>
                     </div>
-                  </motion.div>
-                  {index < steps.length - 1 && (
-                    <div
-                      className="flex-grow h-0.5 mx-4 min-w-[2rem]"
-                      style={{ backgroundColor: `${colors.textLight}40` }}
-                    ></div>
-                  )}
+
+                    {stepIdx < 5 && (
+                      <div className="flex-1 mx-2 sm:mx-4">
+                        <div
+                          className="h-0.5 rounded-full transition-all duration-300"
+                          style={{
+                            backgroundColor: step.completed
+                              ? colors.success
+                              : step.current
+                                ? `${colors.primary}50`
+                                : `${colors.textLight}30`
+                          }}
+                        ></div>
+                      </div>
+                    )}
+                  </React.Fragment>
+                ))}
+              </div>
+
+              {/* Mobile view - show only current step prominently */}
+              <div className="sm:hidden mt-4 text-center">
+                <div
+                  className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium"
+                  style={{
+                    backgroundColor: `${colors.primary}15`,
+                    color: colors.primary
+                  }}
+                >
+                  Step 2 of 6: Entity Generation
                 </div>
-              ))}
+              </div>
             </div>
-          </motion.div>
+          </div>
 
           <motion.div variants={itemVariants} className="text-center mb-10">
             <motion.h1
