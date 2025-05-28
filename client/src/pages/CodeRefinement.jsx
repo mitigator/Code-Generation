@@ -84,7 +84,12 @@ const CodeRefinement = () => {
       setError(null);
       setCombineStatus(null);
       
-      const response = await fetch('http://localhost:5000/api/code-refinement/combine-json');
+      const response = await fetch('http://localhost:5000/api/code-refinement/combine-json', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
       const data = await response.json();
       
       if (response.ok && data.success) {

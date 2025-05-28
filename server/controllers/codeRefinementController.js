@@ -790,7 +790,7 @@ export const refineCode = async (req, res) => {
                 success: false,
                 message: 'Unable to connect to Flowise API',
                 error: 'Make sure Flowise server is running on localhost:3000',
-                flowiseEndpoint: 'http://localhost:3000/api/v1/prediction/55b6cd64-4f54-4f71-8e80-d02301e3f2d6'
+                flowiseEndpoint: process.env.CODE_REFINEMENT
             });
         }
 

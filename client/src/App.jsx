@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { ThemeProvider } from './services/ThemeContext';
 import './App.css'
 import Home from './pages/Home';
 import ProjectStartupPage from './components/ProjectStartup';
@@ -13,19 +14,21 @@ function App() {
 
   return (
     <>
-      <Router>
-      <div className="App">
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/project-startup" element={<ProjectStartupPage />} />
-          <Route path="/entity-generation" element={<EntityGenerationPage />} />
-          <Route path="/tech-stack-selection" element={<TechStackSelection />} />
-          <Route path="/project-confirmation" element={<TechStackConfirmation />} />
-          <Route path="/code-generation" element={<CodeGeneration />} />
-          <Route path="/code-refinement" element={<CodeRefinement/>}/>
-        </Routes>
-      </div>
-    </Router>
+      <ThemeProvider>
+        <Router>
+          <div className="App">
+            <Routes>
+              <Route path="/" element={<Home />} />
+              <Route path="/project-startup" element={<ProjectStartupPage />} />
+              <Route path="/entity-generation" element={<EntityGenerationPage />} />
+              <Route path="/tech-stack-selection" element={<TechStackSelection />} />
+              <Route path="/project-confirmation" element={<TechStackConfirmation />} />
+              <Route path="/code-generation" element={<CodeGeneration />} />
+              <Route path="/code-refinement" element={<CodeRefinement />} />
+            </Routes>
+          </div>
+        </Router>
+      </ThemeProvider>
     </>
   )
 }
