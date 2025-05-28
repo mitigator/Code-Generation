@@ -103,7 +103,7 @@ const extractProjectFilesFromText = (textContent) => {
 // Flowise API query function
 async function query(formData) {
     const response = await fetch(
-        "http://localhost:3000/api/v1/prediction/55b6cd64-4f54-4f71-8e80-d02301e3f2d6",
+        "http://localhost:3000/api/v1/prediction/a85d52b3-20c3-4e57-b2ae-8287017c6940",
         {
             method: "POST",
             body: formData

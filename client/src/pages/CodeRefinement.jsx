@@ -1,20 +1,20 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  Folder, 
-  File, 
-  ChevronRight, 
-  ChevronDown, 
-  RefreshCw, 
-  AlertCircle, 
-  CheckCircle, 
-  Code, 
+import {
+  Folder,
+  File,
+  ChevronRight,
+  ChevronDown,
+  RefreshCw,
+  AlertCircle,
+  CheckCircle,
+  Code,
   Loader,
   Play,
   Merge,
   Database,
   FileText
 } from 'lucide-react';
-
+ 
 const CodeRefinement = () => {
   const [status, setStatus] = useState({
     hasCodeGeneration: false,
@@ -35,27 +35,27 @@ const CodeRefinement = () => {
   const [error, setError] = useState(null);
   const [mergeStatus, setMergeStatus] = useState(null);
   const [combineStatus, setCombineStatus] = useState(null);
-
+ 
   // Check status on component mount
   useEffect(() => {
     checkStatus();
   }, []);
-
+ 
   const checkStatus = async () => {
     try {
       setLoading(true);
       setError(null);
       const response = await fetch('http://localhost:5000/api/code-refinement/status');
-      
+     
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-      
+     
       const data = await response.json();
-      
+     
       if (data.success) {
         setStatus(data);
-        
+       
         // Display files from available data sources (priority order)
         if (data.mergedCodeOutputData && data.mergedCodeOutputData.text) {
           parseAndDisplayCode(data.mergedCodeOutputData);
@@ -66,7 +66,7 @@ const CodeRefinement = () => {
         } else if (data.codeGenOutputData && data.codeGenOutputData.text) {
           parseAndDisplayCode(data.codeGenOutputData);
         }
-        
+       
       } else {
         setError(data.message || 'Failed to check status');
       }
@@ -77,13 +77,13 @@ const CodeRefinement = () => {
       setLoading(false);
     }
   };
-
+ 
   const combineFiles = async () => {
     try {
       setLoading(true);
       setError(null);
       setCombineStatus(null);
-      
+
       const response = await fetch('http://localhost:5000/api/code-refinement/combine-json', {
         method: 'POST',
         headers: {
@@ -91,7 +91,7 @@ const CodeRefinement = () => {
         },
       });
       const data = await response.json();
-      
+     
       if (response.ok && data.success) {
         setCombineStatus({
           success: true,
@@ -110,7 +110,7 @@ const CodeRefinement = () => {
       setLoading(false);
     }
   };
-
+ 
   const triggerRefinement = async () => {
     try {
       setLoading(true);
@@ -121,9 +121,9 @@ const CodeRefinement = () => {
           'Content-Type': 'application/json',
         },
       });
-      
+     
       const data = await response.json();
-      
+     
       if (response.ok && data.success) {
         // Refresh status after refinement
         await checkStatus();
@@ -137,25 +137,25 @@ const CodeRefinement = () => {
       setLoading(false);
     }
   };
-
+ 
   const handleMerge = async () => {
     try {
       setLoading(true);
       setError(null);
       setMergeStatus(null);
-      
+     
       const response = await fetch('http://localhost:5000/api/code-refinement/merge', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
       });
-      
+     
       const data = await response.json();
-      
+     
       if (response.ok && data.success) {
         setMergeStatus(data);
-        
+       
         // Update file tree with merged data
         if (data.data && data.data.text) {
           try {
@@ -168,7 +168,7 @@ const CodeRefinement = () => {
             console.error('Error parsing merged data:', parseError);
           }
         }
-        
+       
         // Refresh status after merge
         await checkStatus();
       } else {
@@ -181,11 +181,11 @@ const CodeRefinement = () => {
       setLoading(false);
     }
   };
-
+ 
   const parseAndDisplayCode = (codeData) => {
     try {
       let textToParse = codeData.text;
-      
+     
       // Handle markdown code blocks (```json ... ```)
       if (textToParse.includes('```json')) {
         const jsonMatch = textToParse.match(/```json\s*([\s\S]*?)\s*```/);
@@ -193,7 +193,7 @@ const CodeRefinement = () => {
           textToParse = jsonMatch[1].trim();
         }
       }
-      
+     
       // Handle plain code blocks (``` ... ```)
       if (textToParse.includes('```') && !textToParse.includes('```json')) {
         const codeMatch = textToParse.match(/```\s*([\s\S]*?)\s*```/);
@@ -201,7 +201,7 @@ const CodeRefinement = () => {
           textToParse = codeMatch[1].trim();
         }
       }
-      
+     
       const parsedData = JSON.parse(textToParse);
       if (parsedData.project_files) {
         const tree = buildFileTree(parsedData.project_files);
@@ -212,18 +212,18 @@ const CodeRefinement = () => {
       try {
         const jsonStart = codeData.text.indexOf('{');
         const jsonEnd = codeData.text.lastIndexOf('}') + 1;
-        
+       
         if (jsonStart !== -1 && jsonEnd > jsonStart) {
           const extractedJson = codeData.text.substring(jsonStart, jsonEnd);
           const parsedData = JSON.parse(extractedJson);
-          
+         
           if (parsedData.project_files) {
             const tree = buildFileTree(parsedData.project_files);
             setFileTree(tree);
             return;
           }
         }
-        
+       
         setError('No valid project files found in the data');
         console.error('Parse error - raw data:', codeData.text.substring(0, 200) + '...');
       } catch (secondErr) {
@@ -234,11 +234,11 @@ const CodeRefinement = () => {
       }
     }
   };
-
+ 
   const parseAndDisplayRefinedCode = (refinedData) => {
     try {
       let textToParse = refinedData.text;
-      
+     
       // Handle markdown code blocks (```json ... ```)
       if (textToParse.includes('```json')) {
         const jsonMatch = textToParse.match(/```json\s*([\s\S]*?)\s*```/);
@@ -246,7 +246,7 @@ const CodeRefinement = () => {
           textToParse = jsonMatch[1].trim();
         }
       }
-      
+     
       // Handle plain code blocks (``` ... ```)
       if (textToParse.includes('```') && !textToParse.includes('```json')) {
         const codeMatch = textToParse.match(/```\s*([\s\S]*?)\s*```/);
@@ -254,7 +254,7 @@ const CodeRefinement = () => {
           textToParse = codeMatch[1].trim();
         }
       }
-      
+     
       // Try to parse as JSON first
       let refinedFiles = [];
       try {
@@ -268,7 +268,7 @@ const CodeRefinement = () => {
         // If not JSON, might be direct array
         refinedFiles = JSON.parse(textToParse);
       }
-      
+     
       if (refinedFiles && refinedFiles.length > 0) {
         // Mark refined files
         const markedFiles = refinedFiles.map(file => ({
@@ -276,7 +276,7 @@ const CodeRefinement = () => {
           refined: true,
           refinedAt: new Date().toISOString()
         }));
-        
+       
         const tree = buildFileTree(markedFiles);
         setFileTree(tree);
       }
@@ -286,14 +286,14 @@ const CodeRefinement = () => {
       console.error('Raw refined data sample:', refinedData.text?.substring(0, 200) + '...');
     }
   };
-
+ 
   const buildFileTree = (files) => {
     const tree = {};
-    
+   
     files.forEach(file => {
       const pathParts = file.file_path.split('/');
       let current = tree;
-      
+     
       pathParts.forEach((part, index) => {
         if (!current[part]) {
           const isFile = index === pathParts.length - 1;
@@ -316,17 +316,17 @@ const CodeRefinement = () => {
         }
       });
     });
-    
+   
     return convertTreeToArray(tree);
   };
-
+ 
   const convertTreeToArray = (tree, parentPath = '') => {
     const result = [];
-    
+   
     Object.keys(tree).sort().forEach(key => {
       const item = tree[key];
       const fullPath = parentPath ? `${parentPath}/${key}` : key;
-      
+     
       if (item.type === 'folder') {
         result.push({
           ...item,
@@ -340,10 +340,10 @@ const CodeRefinement = () => {
         });
       }
     });
-    
+   
     return result;
   };
-
+ 
   const toggleFolder = (path) => {
     const newExpanded = new Set(expandedFolders);
     if (newExpanded.has(path)) {
@@ -353,17 +353,17 @@ const CodeRefinement = () => {
     }
     setExpandedFolders(newExpanded);
   };
-
+ 
   const selectFile = (file) => {
     if (file.type === 'file') {
       setSelectedFile(file);
     }
   };
-
+ 
   const renderTreeItem = (item, level = 0) => {
     const isExpanded = expandedFolders.has(item.path);
     const indent = level * 20;
-
+ 
     return (
       <div key={item.path}>
         <div
@@ -391,7 +391,7 @@ const CodeRefinement = () => {
             </>
           )}
         </div>
-        
+       
         {item.type === 'folder' && isExpanded && item.children && (
           <div>
             {item.children.map(child => renderTreeItem(child, level + 1))}
@@ -400,7 +400,7 @@ const CodeRefinement = () => {
       </div>
     );
   };
-
+ 
   const getStatusInfo = () => {
     if (status.hasMergedCodeOutput) {
       return { message: "Merged code available", color: "text-green-600", icon: CheckCircle };
@@ -414,10 +414,10 @@ const CodeRefinement = () => {
       return { message: "Waiting for source files", color: "text-gray-600", icon: FileText };
     }
   };
-
+ 
   const statusInfo = getStatusInfo();
   const StatusIcon = statusInfo.icon;
-
+ 
   return (
     <div className="min-h-screen bg-gray-50 p-6">
       <div className="max-w-7xl mx-auto">
@@ -432,7 +432,7 @@ const CodeRefinement = () => {
                   <p className={`text-sm ${statusInfo.color}`}>{statusInfo.message}</p>
                 </div>
               </div>
-              
+             
               <div className="flex items-center space-x-3">
                 <button
                   onClick={checkStatus}
@@ -442,7 +442,7 @@ const CodeRefinement = () => {
                   <RefreshCw size={16} className={`mr-2 ${loading ? 'animate-spin' : ''}`} />
                   Refresh
                 </button>
-                
+               
                 {status.canCombine && !status.hasCodeRefinementInput && (
                   <button
                     onClick={combineFiles}
@@ -453,7 +453,7 @@ const CodeRefinement = () => {
                     Combine Files
                   </button>
                 )}
-                
+               
                 {status.canRefine && !status.hasCodeRefinement && (
                   <button
                     onClick={triggerRefinement}
@@ -464,7 +464,7 @@ const CodeRefinement = () => {
                     Start Refinement
                   </button>
                 )}
-                
+               
                 {status.canMerge && !status.hasMergedCodeOutput && (
                   <button
                     onClick={handleMerge}
@@ -478,7 +478,7 @@ const CodeRefinement = () => {
               </div>
             </div>
           </div>
-
+ 
           {/* Status Messages */}
           {error && (
             <div className="mx-6 mt-4 p-4 bg-red-50 border border-red-200 rounded-md">
@@ -488,7 +488,7 @@ const CodeRefinement = () => {
               </div>
             </div>
           )}
-
+ 
           {combineStatus && (
             <div className="mx-6 mt-4 p-4 bg-purple-50 border border-purple-200 rounded-md">
               <div className="flex items-center">
@@ -502,7 +502,7 @@ const CodeRefinement = () => {
               </div>
             </div>
           )}
-
+ 
           {mergeStatus && (
             <div className="mx-6 mt-4 p-4 bg-green-50 border border-green-200 rounded-md">
               <div className="flex items-center">
@@ -521,7 +521,7 @@ const CodeRefinement = () => {
               </div>
             </div>
           )}
-
+ 
           {/* File Status Summary */}
           <div className="px-6 py-4 bg-gray-50 border-b">
             <div className="grid grid-cols-3 md:grid-cols-6 gap-4 text-sm">
@@ -551,7 +551,7 @@ const CodeRefinement = () => {
               </div>
             </div>
           </div>
-
+ 
           {/* Main Content */}
           <div className="flex h-screen">
             {/* File Tree */}
@@ -562,7 +562,7 @@ const CodeRefinement = () => {
                   {fileTree.length > 0 ? `${fileTree.length} items` : 'No files loaded'}
                 </p>
               </div>
-              
+             
               <div className="py-2">
                 {fileTree.length > 0 ? (
                   fileTree.map(item => renderTreeItem(item))
@@ -590,7 +590,7 @@ const CodeRefinement = () => {
                 )}
               </div>
             </div>
-
+ 
             {/* Code View */}
             <div className="flex-1 flex flex-col">
               {selectedFile ? (
@@ -622,7 +622,7 @@ const CodeRefinement = () => {
                       )}
                     </div>
                   </div>
-                  
+                 
                   <div className="flex-1 overflow-auto">
                     <pre className="p-4 text-sm font-mono bg-gray-900 text-gray-100 h-full overflow-auto">
                       <code>{selectedFile.code}</code>
@@ -645,5 +645,5 @@ const CodeRefinement = () => {
     </div>
   );
 };
-
+ 
 export default CodeRefinement;
