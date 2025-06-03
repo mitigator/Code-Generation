@@ -1,7 +1,7 @@
 // themes.js - Color schemes and configurations for code generation themes
 
 export const themes = {
-  default:{
+  forge:{
     name:"default",
     description:"default color scheme",
     icon: "⚙️",
@@ -29,7 +29,7 @@ export const themes = {
     borderDark: "#374151"
     }
   },
-  forge: {
+  default: {
     name: "Forge",
     description: "Modern forge where code is crafted like steel",
     icon: "🔨", // Alternative icons: ⚒️, 🛠️, 🔥

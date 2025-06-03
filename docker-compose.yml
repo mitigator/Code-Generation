@@ -1,0 +1,18 @@
+version: '3.9'
+
+services:
+  server:
+    build: ./Server
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./Server:/app
+    restart: always
+
+  client:
+    build: ./Client
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./Client:/app
+    restart: always

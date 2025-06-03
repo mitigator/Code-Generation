@@ -1,0 +1,21 @@
+# Client/Dockerfile
+
+FROM node:18
+
+WORKDIR /app
+
+# Copy package.json and lock file first
+COPY package*.json ./
+
+# Clean existing installs if any
+RUN rm -rf node_modules package-lock.json
+
+# Reinstall cleanly
+RUN npm install
+
+# Then copy rest of the app
+COPY . .
+
+EXPOSE 5173
+
+CMD ["npm", "run", "dev"]

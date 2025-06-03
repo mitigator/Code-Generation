@@ -477,7 +477,7 @@ function EntityGenerationPage() {
         <Navbar />
         <div className="flex-grow flex items-center justify-center">
           <div className="text-center">
-            <Loader text={loadingMessage} />
+            <Loader />
             <div className="mt-4 max-w-md mx-auto">
               <div 
                 className="text-sm px-4 py-2 rounded-lg"
