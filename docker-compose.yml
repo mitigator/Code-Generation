@@ -1,0 +1,22 @@
+version: '3.9'
+
+services:
+  server:
+    build: ./Server
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./Server:/app
+    restart: always
+
+  client:
+    build: ./Client
+    ports:
+      - "5173:5173"
+    volumes:
+    - ./Client/src:/app/src  # Only mount source code
+    - ./Client/public:/app/public
+    environment:
+      ROLLUP_USE_NATIVE: "false"  # Force JavaScript version of Rollup
+      NODE_ENV: development       # Ensure development mode
+    restart: always

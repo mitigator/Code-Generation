@@ -174,7 +174,7 @@ function Navbar() {
         
         {/* Desktop Auth Buttons */}
         <div className="flex items-center space-x-4">
-          <button className="text-sm font-medium hidden sm:block transition-colors duration-200" 
+          {/* <button className="text-sm font-medium hidden sm:block transition-colors duration-200" 
             style={{ color: colors.primary }}
             onMouseOver={(e) => {
               e.currentTarget.style.color = colors.primaryDark;
@@ -184,8 +184,8 @@ function Navbar() {
             }}
           >
             Sign In
-          </button>
-          <button 
+          </button> */}
+          {/* <button 
             className="text-sm font-medium px-4 py-2 rounded-lg shadow-sm hover:shadow-md transform hover:translate-y-px transition-all duration-200" 
             style={{ 
               backgroundColor: colors.primary, 
@@ -202,7 +202,7 @@ function Navbar() {
             }}
           >
             Sign Up
-          </button>
+          </button> */}
           
           {/* Mobile Menu Button */}
           <button onClick={toggleMobileMenu} className="block md:hidden focus:outline-none">
@@ -270,7 +270,7 @@ function Navbar() {
             )}
           </div>
           
-          <a href="#" className="block px-3 py-2 rounded-md text-base font-medium" style={{ color: colors.primary }}>Sign In</a>
+          {/* <a href="#" className="block px-3 py-2 rounded-md text-base font-medium" style={{ color: colors.primary }}>Sign In</a> */}
         </div>
       </div>
     </header>

@@ -1,0 +1,19 @@
+FROM node:22
+
+WORKDIR /app
+
+# Set environment variable to use JS version of Rollup
+ENV ROLLUP_USE_NATIVE=false
+
+# Copy package files first
+COPY package*.json ./
+
+# Install dependencies
+RUN npm install
+
+# Copy the rest of the application
+COPY . .
+
+EXPOSE 5173
+
+CMD ["npm", "run", "dev"]

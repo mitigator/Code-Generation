@@ -153,7 +153,7 @@ function EntityCard({ entity, selected, onToggleSelection, index, colors, isReje
           <ul className="divide-y" style={{ borderColor: colors.borderDefault }}>
             {entityFields.map((field, idx) => {
               const fieldName = field.name || field || 'unnamed_field';
-              const fieldType = field.type || 'string';
+              const fieldType = '';
              
               return (
                 <li key={idx} className="py-3">
