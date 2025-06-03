@@ -1,19 +1,17 @@
-# Client/Dockerfile
-
-FROM node:18
+FROM node:22
 
 WORKDIR /app
 
-# Copy package.json and lock file first
+# Set environment variable to use JS version of Rollup
+ENV ROLLUP_USE_NATIVE=false
+
+# Copy package files first
 COPY package*.json ./
 
-# Clean existing installs if any
-RUN rm -rf node_modules package-lock.json
-
-# Reinstall cleanly
+# Install dependencies
 RUN npm install
 
-# Then copy rest of the app
+# Copy the rest of the application
 COPY . .
 
 EXPOSE 5173
